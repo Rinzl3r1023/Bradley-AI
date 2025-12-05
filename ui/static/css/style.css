@@ -1,0 +1,421 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap');
+
+:root {
+    --neon-cyan: #00f0ff;
+    --neon-blue: #0066ff;
+    --neon-green: #00ff41;
+    --neon-orange: #ff6600;
+    --neon-red: #ff0040;
+    --dark-bg: #0a0a0f;
+    --panel-bg: rgba(0, 20, 40, 0.8);
+    --grid-color: rgba(0, 240, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-secondary: #88ccff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Share Tech Mono', monospace;
+    background-color: var(--dark-bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.grid-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 20s linear infinite;
+    z-index: -2;
+}
+
+@keyframes gridMove {
+    0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+    100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+}
+
+.scanlines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.1),
+        rgba(0, 0, 0, 0.1) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.header {
+    text-align: center;
+    padding: 3rem 0;
+}
+
+.logo-container {
+    position: relative;
+    display: inline-block;
+}
+
+.logo-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse, rgba(0, 240, 255, 0.3), transparent 70%);
+    filter: blur(30px);
+    animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 4rem;
+    font-weight: 900;
+    letter-spacing: 0.3em;
+    color: var(--neon-cyan);
+    text-shadow: 
+        0 0 10px var(--neon-cyan),
+        0 0 20px var(--neon-cyan),
+        0 0 40px var(--neon-cyan),
+        0 0 80px var(--neon-blue);
+    position: relative;
+}
+
+.logo .ai {
+    color: var(--neon-green);
+    text-shadow: 
+        0 0 10px var(--neon-green),
+        0 0 20px var(--neon-green),
+        0 0 40px var(--neon-green);
+}
+
+.tagline {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.5em;
+    color: var(--text-secondary);
+    margin-top: 1rem;
+    opacity: 0.8;
+}
+
+.main-content {
+    display: grid;
+    gap: 2rem;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.3);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    color: var(--neon-cyan);
+}
+
+.indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--neon-green);
+    box-shadow: 0 0 10px var(--neon-green);
+}
+
+.indicator.online {
+    animation: blink 2s ease-in-out infinite;
+}
+
+.indicator.scanning {
+    background: var(--neon-orange);
+    box-shadow: 0 0 10px var(--neon-orange);
+    animation: scan-pulse 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes scan-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.7; }
+}
+
+.status-panel, .detection-panel, .terminal-panel {
+    background: var(--panel-bg);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 4px;
+    backdrop-filter: blur(10px);
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    padding: 1.5rem;
+}
+
+.status-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.status-item .label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.status-item .value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: var(--neon-green);
+    text-shadow: 0 0 10px var(--neon-green);
+}
+
+.status-item .value.threat {
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px var(--neon-cyan);
+}
+
+.detection-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.detector-card {
+    background: rgba(0, 40, 80, 0.5);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 4px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.detector-card:hover {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
+    transform: translateY(-5px);
+}
+
+.detector-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1rem;
+    color: var(--neon-cyan);
+}
+
+.detector-card h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.2em;
+    color: var(--neon-cyan);
+    margin-bottom: 0.5rem;
+}
+
+.detector-card p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.confidence-bar {
+    height: 4px;
+    background: rgba(0, 240, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.confidence-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+    box-shadow: 0 0 10px var(--neon-cyan);
+    transition: width 1s ease;
+}
+
+.confidence-text {
+    font-size: 0.75rem;
+    color: var(--neon-green);
+}
+
+.action-panel {
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.scan-button {
+    position: relative;
+    padding: 1rem 3rem;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.3em;
+    color: var(--dark-bg);
+    background: var(--neon-cyan);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.scan-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 40px var(--neon-cyan);
+}
+
+.scan-button:active {
+    transform: scale(0.98);
+}
+
+.button-glow {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.terminal {
+    padding: 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+}
+
+.terminal-line {
+    display: flex;
+    gap: 1rem;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+}
+
+.terminal-line .timestamp {
+    color: var(--neon-orange);
+    min-width: 80px;
+}
+
+.terminal-line .message {
+    color: var(--neon-green);
+}
+
+.terminal-line.threat .message {
+    color: var(--neon-red);
+    text-shadow: 0 0 5px var(--neon-red);
+}
+
+.footer {
+    text-align: center;
+    padding: 3rem 0;
+    margin-top: 2rem;
+}
+
+.footer-content {
+    font-style: italic;
+    color: var(--text-secondary);
+    opacity: 0.8;
+    margin-bottom: 1.5rem;
+}
+
+.footer-content p {
+    margin: 0.25rem 0;
+}
+
+.token-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: rgba(0, 102, 255, 0.2);
+    border: 1px solid var(--neon-blue);
+    border-radius: 4px;
+}
+
+.token-symbol {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--neon-blue);
+    text-shadow: 0 0 10px var(--neon-blue);
+}
+
+.token-network {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.2em;
+    margin-top: 0.25rem;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 20, 40, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--neon-cyan);
+    border-radius: 3px;
+}
+
+@media (max-width: 768px) {
+    .logo {
+        font-size: 2.5rem;
+        letter-spacing: 0.2em;
+    }
+    
+    .tagline {
+        font-size: 0.7rem;
+        letter-spacing: 0.3em;
+    }
+    
+    .container {
+        padding: 1rem;
+    }
+}

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bradley AI — Enter the System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="grid-background"></div>
+    <div class="scanlines"></div>
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo-glow"></div>
+                <h1 class="logo">BRADLEY<span class="ai">AI</span></h1>
+            </div>
+            <p class="tagline">THE GUARDIAN PROGRAM FOR THE REAL WORLD</p>
+        </header>
+
+        <main class="main-content">
+            <div class="status-panel">
+                <div class="panel-header">
+                    <span class="indicator online"></span>
+                    <span>SYSTEM STATUS</span>
+                </div>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="label">Guardian</span>
+                        <span class="value" id="guardian-status">ONLINE</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">Version</span>
+                        <span class="value" id="version">v0.1.0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">Nodes Active</span>
+                        <span class="value" id="nodes-count">1</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">Threats Detected</span>
+                        <span class="value threat" id="threats-count">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detection-panel">
+                <div class="panel-header">
+                    <span class="indicator scanning"></span>
+                    <span>THREAT DETECTION ENGINE</span>
+                </div>
+                <div class="detection-content">
+                    <div class="detector-card">
+                        <div class="detector-icon video-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                <path d="M10 9l5 3-5 3V9z"/>
+                            </svg>
+                        </div>
+                        <h3>DEEPFAKE VIDEO</h3>
+                        <p>Real-time video manipulation detection</p>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 94%"></div>
+                        </div>
+                        <span class="confidence-text">94% Detection Accuracy</span>
+                    </div>
+                    <div class="detector-card">
+                        <div class="detector-icon audio-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 1v22M8 4v16M16 4v16M4 8v8M20 8v8"/>
+                            </svg>
+                        </div>
+                        <h3>VOICE CLONE</h3>
+                        <p>AI-generated voice detection</p>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 91%"></div>
+                        </div>
+                        <span class="confidence-text">91% Detection Accuracy</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-panel">
+                <button class="scan-button" onclick="runScan()">
+                    <span class="button-glow"></span>
+                    <span class="button-text">INITIATE SCAN</span>
+                </button>
+            </div>
+
+            <div class="terminal-panel">
+                <div class="panel-header">
+                    <span class="indicator"></span>
+                    <span>SYSTEM LOG</span>
+                </div>
+                <div class="terminal" id="terminal">
+                    <div class="terminal-line">
+                        <span class="timestamp">[INIT]</span>
+                        <span class="message">Bradley AI online.</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="timestamp">[INIT]</span>
+                        <span class="message">Guardian program activated.</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="timestamp">[INIT]</span>
+                        <span class="message">Protecting the grid...</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <p>"Alan Bradley created Tron to protect the system from the MCP.</p>
+                <p>We created Bradley to protect users from malicious AI."</p>
+            </div>
+            <div class="token-badge">
+                <span class="token-symbol">$BRADLEY</span>
+                <span class="token-network">BASE NETWORK</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
