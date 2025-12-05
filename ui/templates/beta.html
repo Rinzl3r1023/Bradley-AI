@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bradley AI — Closed Beta Signup</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .beta-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .beta-form {
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 4px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            color: var(--neon-cyan);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+        }
+        
+        .form-group input::placeholder {
+            color: rgba(136, 204, 255, 0.5);
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0.2em;
+            color: var(--dark-bg);
+            background: var(--neon-cyan);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            box-shadow: 0 0 30px var(--neon-cyan);
+            transform: translateY(-2px);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .success-message.show {
+            display: block;
+        }
+        
+        .success-message h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green);
+            margin-bottom: 1rem;
+        }
+        
+        .success-message p {
+            color: var(--text-secondary);
+        }
+        
+        .beta-info {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(0, 102, 255, 0.1);
+            border: 1px solid rgba(0, 102, 255, 0.3);
+            border-radius: 4px;
+        }
+        
+        .beta-info h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-blue);
+            margin-bottom: 0.5rem;
+        }
+        
+        .beta-info p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+        }
+        
+        .back-link:hover {
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
+        .error-message {
+            background: rgba(255, 0, 64, 0.2);
+            border: 1px solid var(--neon-red);
+            color: var(--neon-red);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-background"></div>
+    <div class="scanlines"></div>
+    
+    <div class="beta-container">
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo-glow"></div>
+                <h1 class="logo">BRADLEY<span class="ai">AI</span></h1>
+            </div>
+            <p class="tagline">CLOSED BETA — THE BUSINESS LOUNGE</p>
+        </header>
+
+        <div class="beta-form" id="signup-form">
+            <div class="error-message" id="error-message"></div>
+            
+            <form onsubmit="submitBetaSignup(event)">
+                <div class="form-group">
+                    <label>EMAIL ADDRESS *</label>
+                    <input type="email" id="email" placeholder="your@email.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>NAME</label>
+                    <input type="text" id="name" placeholder="Your name">
+                </div>
+                
+                <div class="form-group">
+                    <label>WALLET ADDRESS (OPTIONAL)</label>
+                    <input type="text" id="wallet" placeholder="0x... (for $BRADLEY token airdrop)">
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submit-btn">
+                    JOIN THE GRID
+                </button>
+            </form>
+        </div>
+        
+        <div class="success-message" id="success-message">
+            <h2>WELCOME TO THE GRID</h2>
+            <p>You've been added to the Bradley AI closed beta.</p>
+            <p>We'll notify you when your node access is ready.</p>
+            <div class="token-badge" style="margin-top: 1.5rem;">
+                <span class="token-symbol">$BRADLEY</span>
+                <span class="token-network">EARLY ACCESS</span>
+            </div>
+        </div>
+        
+        <div class="beta-info">
+            <h3>FIRST 250 NODE RUNNERS</h3>
+            <p>Join the decentralized guardian network. Run a node, stake $BRADLEY, protect the grid.</p>
+        </div>
+        
+        <a href="/" class="back-link">← BACK TO SYSTEM</a>
+    </div>
+
+    <script>
+        async function submitBetaSignup(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const name = document.getElementById('name').value;
+            const wallet = document.getElementById('wallet').value;
+            const submitBtn = document.getElementById('submit-btn');
+            const errorMsg = document.getElementById('error-message');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'CONNECTING...';
+            errorMsg.classList.remove('show');
+            
+            try {
+                const response = await fetch('/api/beta/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        name: name,
+                        wallet_address: wallet,
+                        referral_source: 'business_lounge'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('signup-form').style.display = 'none';
+                    document.getElementById('success-message').classList.add('show');
+                } else {
+                    errorMsg.textContent = data.error || 'Failed to sign up. Please try again.';
+                    errorMsg.classList.add('show');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'JOIN THE GRID';
+                }
+            } catch (error) {
+                errorMsg.textContent = 'Connection error. Please try again.';
+                errorMsg.classList.add('show');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'JOIN THE GRID';
+            }
+        }
+    </script>
+</body>
+</html>

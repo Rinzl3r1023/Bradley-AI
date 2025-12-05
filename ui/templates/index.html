@@ -35,8 +35,8 @@
                         <span class="value" id="version">v0.1.0</span>
                     </div>
                     <div class="status-item">
-                        <span class="label">Nodes Active</span>
-                        <span class="value" id="nodes-count">1</span>
+                        <span class="label">Node ID</span>
+                        <span class="value" id="node-id">...</span>
                     </div>
                     <div class="status-item">
                         <span class="label">Threats Detected</span>
@@ -51,7 +51,7 @@
                     <span>THREAT DETECTION ENGINE</span>
                 </div>
                 <div class="detection-content">
-                    <div class="detector-card">
+                    <div class="detector-card" onclick="openUpload('video')">
                         <div class="detector-icon video-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect x="2" y="4" width="20" height="16" rx="2"/>
@@ -63,9 +63,9 @@
                         <div class="confidence-bar">
                             <div class="confidence-fill" style="width: 94%"></div>
                         </div>
-                        <span class="confidence-text">94% Detection Accuracy</span>
+                        <span class="confidence-text">Click to upload video</span>
                     </div>
-                    <div class="detector-card">
+                    <div class="detector-card" onclick="openUpload('audio')">
                         <div class="detector-icon audio-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M12 1v22M8 4v16M16 4v16M4 8v8M20 8v8"/>
@@ -76,16 +76,47 @@
                         <div class="confidence-bar">
                             <div class="confidence-fill" style="width: 91%"></div>
                         </div>
-                        <span class="confidence-text">91% Detection Accuracy</span>
+                        <span class="confidence-text">Click to upload audio</span>
                     </div>
+                </div>
+            </div>
+
+            <div class="upload-panel" id="upload-panel" style="display: none;">
+                <div class="panel-header">
+                    <span class="indicator"></span>
+                    <span id="upload-title">UPLOAD FILE</span>
+                </div>
+                <div class="upload-content">
+                    <input type="file" id="file-input" style="display: none;">
+                    <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+                        <div class="upload-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <p id="upload-instructions">Click or drag to upload</p>
+                        <p class="upload-formats" id="upload-formats"></p>
+                    </div>
+                    <div class="upload-progress" id="upload-progress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <span class="progress-text" id="progress-text">Analyzing...</span>
+                    </div>
+                    <button class="cancel-btn" onclick="closeUpload()">CANCEL</button>
                 </div>
             </div>
 
             <div class="action-panel">
                 <button class="scan-button" onclick="runScan()">
                     <span class="button-glow"></span>
-                    <span class="button-text">INITIATE SCAN</span>
+                    <span class="button-text">DEMO SCAN</span>
                 </button>
+                <a href="/beta" class="beta-button">
+                    <span class="button-text">JOIN CLOSED BETA</span>
+                </a>
             </div>
 
             <div class="terminal-panel">

@@ -1,6 +1,7 @@
 modules = ["python-3.11"]
 [agent]
 expertMode = true
+integrations = ["python_database:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
@@ -35,5 +36,5 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 45593
-externalPort = 3000
+localPort = 37725
+externalPort = 3001
