@@ -1,9 +1,10 @@
-from typing import Dict, TypedDict, Annotated
+from typing import Dict, TypedDict
 from langgraph.graph import StateGraph, END
 
 from detection.video_detector import detect_video_deepfake
 from detection.audio_detector import detect_audio_deepfake
 from relay.node import relay_threat, grid_node
+from agents.grok import analyze_threat_with_grok, get_grok_status
 
 
 class ThreatState(TypedDict):
@@ -13,6 +14,7 @@ class ThreatState(TypedDict):
     audio_result: Dict
     relay_status: str
     threat_level: str
+    grok_analysis: Dict
     scan_complete: bool
 
 
@@ -146,6 +148,16 @@ class BradleySwarm:
         if video_result.get('is_deepfake') or audio_result.get('is_deepfake'):
             self.threats_detected += 1
         
+        grok_analysis = None
+        grok_status = get_grok_status()
+        if grok_status.get('configured'):
+            print("[GROK AGENT] Performing AI-enhanced threat analysis...")
+            grok_analysis = analyze_threat_with_grok({
+                'video_result': video_result,
+                'audio_result': audio_result,
+                'threat_level': threat_level
+            })
+        
         print(f"\nThreat Level: {threat_level}")
         print("Bradley AI standing by.")
         
@@ -154,6 +166,8 @@ class BradleySwarm:
             'audio_result': audio_result,
             'relay_status': relay_status,
             'threat_level': threat_level,
+            'grok_analysis': grok_analysis,
+            'grok_enabled': grok_status.get('configured', False),
             'scans_completed': self.scans_completed,
             'threats_detected': self.threats_detected
         }
@@ -175,9 +189,11 @@ class BradleySwarm:
         return video_result, audio_result, relay_status, threat_level
     
     def get_status(self):
+        grok_status = get_grok_status()
         return {
             'scans_completed': self.scans_completed,
             'threats_detected': self.threats_detected,
             'status': 'online',
-            'graph_enabled': self.graph is not None
+            'graph_enabled': self.graph is not None,
+            'grok_enabled': grok_status.get('configured', False)
         }

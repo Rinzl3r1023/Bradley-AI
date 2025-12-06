@@ -10,3 +10,4 @@ scikit-learn
 requests
 python-multipart
 psycopg2-binary
+openai
