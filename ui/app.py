@@ -333,7 +333,7 @@ def status():
     return jsonify({
         'status': 'online',
         'guardian': 'Bradley AI',
-        'version': 'v0.1.0',
+        'version': 'v0.2.0',
         'nodes_active': 1,
         'threats_detected': threats_detected,
         'total_scans': total_scans,
