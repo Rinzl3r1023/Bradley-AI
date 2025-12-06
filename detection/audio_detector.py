@@ -1,9 +1,18 @@
 import os
 import numpy as np
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 import warnings
 
 warnings.filterwarnings('ignore')
+
+ALLOWED_AUDIO_FORMATS = ('.wav', '.mp3', '.ogg', '.flac', '.m4a')
+
+def validate_audio_path(path: str) -> None:
+    if not path:
+        raise ValueError("Audio path cannot be empty")
+    if not path.lower().endswith(ALLOWED_AUDIO_FORMATS):
+        raise ValueError(f"Invalid file type. Allowed formats: {', '.join(ALLOWED_AUDIO_FORMATS)}")
+
 
 class VoiceCloneDetector:
     def __init__(self):
@@ -23,8 +32,8 @@ class VoiceCloneDetector:
                 audio = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32)
                 audio = audio / 32768.0
                 return audio
-        except Exception:
-            return None
+        except Exception as e:
+            raise ValueError(f"Error loading audio: {str(e)}")
     
     def extract_features(self, audio: np.ndarray) -> Dict:
         zero_crossings = np.sum(np.abs(np.diff(np.sign(audio)))) / (2 * len(audio))
@@ -113,7 +122,15 @@ class VoiceCloneDetector:
         return anomaly_scores
     
     def detect(self, audio_path: str) -> Dict:
-        audio = self.load_audio(audio_path)
+        try:
+            validate_audio_path(audio_path)
+        except ValueError as e:
+            return {'error': str(e), 'is_deepfake': False, 'confidence': 0.0}
+        
+        try:
+            audio = self.load_audio(audio_path)
+        except ValueError as e:
+            return {'error': str(e), 'is_deepfake': False, 'confidence': 0.0}
         
         if audio is None:
             return self._simulate_detection(audio_path)
@@ -179,4 +196,12 @@ class VoiceCloneDetector:
 detector = VoiceCloneDetector()
 
 def detect_audio_deepfake(path: str) -> Dict:
-    return detector.detect(path)
+    try:
+        return detector.detect(path)
+    except Exception as e:
+        return {
+            'error': str(e),
+            'is_deepfake': False,
+            'confidence': 0.0,
+            'analysis_type': 'error'
+        }

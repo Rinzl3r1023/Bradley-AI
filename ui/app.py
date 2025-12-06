@@ -31,7 +31,7 @@ db.init_app(app)
 from agents.swarm import BradleySwarm
 from detection.video_detector import detect_video_deepfake
 from detection.audio_detector import detect_audio_deepfake
-from relay.node import grid_node
+from relay.node import grid_node, get_registry_stats, add_lounge_node
 
 swarm = BradleySwarm()
 
@@ -115,26 +115,30 @@ def beta_signup():
 
 @app.route('/api/scan', methods=['POST'])
 def scan():
-    result = swarm.run_sample_threat()
-    
     try:
-        detection = ThreatDetection(
-            detection_type='sample',
-            is_threat=result['video_result'].get('is_deepfake', False) or result['audio_result'].get('is_deepfake', False),
-            confidence=max(result['video_result'].get('confidence', 0), result['audio_result'].get('confidence', 0)),
-            model_score=result['video_result'].get('model_score'),
-            artifact_score=result['video_result'].get('artifact_score'),
-            analysis_type='sample_scan',
-            relay_status=result.get('relay_status'),
-            node_id=grid_node.node_id,
-            raw_result=result
-        )
-        db.session.add(detection)
-        db.session.commit()
+        result = swarm.run_sample_threat()
+        
+        try:
+            detection = ThreatDetection(
+                detection_type='sample',
+                is_threat=result['video_result'].get('is_deepfake', False) or result['audio_result'].get('is_deepfake', False),
+                confidence=max(result['video_result'].get('confidence', 0), result['audio_result'].get('confidence', 0)),
+                model_score=result['video_result'].get('model_score'),
+                artifact_score=result['video_result'].get('artifact_score'),
+                analysis_type='sample_scan',
+                relay_status=result.get('relay_status'),
+                node_id=grid_node.node_id,
+                raw_result=result
+            )
+            db.session.add(detection)
+            db.session.commit()
+        except Exception as e:
+            print(f"Database error: {e}")
+            db.session.rollback()
+        
+        return jsonify(result)
     except Exception as e:
-        print(f"Database error: {e}")
-    
-    return jsonify(result)
+        return jsonify({'error': f'Scan failed: {str(e)}'}), 500
 
 
 @app.route('/api/analyze/video', methods=['POST'])
@@ -290,6 +294,32 @@ def beta_signup_submit():
 @app.route('/api/node/status')
 def node_status():
     return jsonify(grid_node.get_status())
+
+
+@app.route('/api/registry/stats')
+def registry_stats():
+    try:
+        stats = get_registry_stats()
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/registry/add', methods=['POST'])
+def add_node():
+    try:
+        data = request.get_json()
+        if not data or not data.get('endpoint'):
+            return jsonify({'error': 'Node endpoint is required'}), 400
+        
+        node_id = add_lounge_node(data['endpoint'])
+        return jsonify({
+            'success': True,
+            'node_id': node_id,
+            'message': f'Node {node_id[:8]} added to registry'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.after_request

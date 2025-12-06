@@ -52,7 +52,9 @@ Bradley-AI/
 - `GET /api/status` - System status
 - `GET /api/detections` - Recent detection history
 - `POST /api/beta/signup` - Register for beta
-- `GET /api/node/status` - Grid node status
+- `GET /api/node/status` - Grid node status with registry stats
+- `GET /api/registry/stats` - Node registry statistics (capacity: 250)
+- `POST /api/registry/add` - Add Business Lounge node to registry
 
 ## Environment Variables
 - `DATABASE_URL` - PostgreSQL connection string (auto-configured)

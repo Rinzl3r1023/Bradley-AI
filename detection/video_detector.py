@@ -1,10 +1,18 @@
 import os
 import cv2
 import numpy as np
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 import torch
 import torch.nn as nn
-from PIL import Image
+
+ALLOWED_VIDEO_FORMATS = ('.mp4', '.avi', '.mov', '.mkv', '.webm')
+
+def validate_video_path(path: str) -> None:
+    if not path:
+        raise ValueError("Video path cannot be empty")
+    if not path.lower().endswith(ALLOWED_VIDEO_FORMATS):
+        raise ValueError(f"Invalid file type. Allowed formats: {', '.join(ALLOWED_VIDEO_FORMATS)}")
+
 
 class DeepfakeVideoDetector:
     def __init__(self):
@@ -23,26 +31,32 @@ class DeepfakeVideoDetector:
         if not os.path.exists(video_path):
             return []
         
-        cap = cv2.VideoCapture(video_path)
-        frames = []
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        
-        if total_frames == 0:
+        try:
+            cap = cv2.VideoCapture(video_path)
+            if not cap.isOpened():
+                raise ValueError("Could not open video file")
+            
+            frames = []
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            
+            if total_frames == 0:
+                cap.release()
+                return []
+            
+            frame_indices = np.linspace(0, total_frames - 1, max_frames, dtype=int)
+            
+            for idx in frame_indices:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
+                ret, frame = cap.read()
+                if ret:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    frame = cv2.resize(frame, self.frame_size)
+                    frames.append(frame)
+            
             cap.release()
-            return []
-        
-        frame_indices = np.linspace(0, total_frames - 1, max_frames, dtype=int)
-        
-        for idx in frame_indices:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
-            ret, frame = cap.read()
-            if ret:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                frame = cv2.resize(frame, self.frame_size)
-                frames.append(frame)
-        
-        cap.release()
-        return frames
+            return frames
+        except Exception as e:
+            raise ValueError(f"Error processing video: {str(e)}")
     
     def analyze_face_artifacts(self, frame: np.ndarray) -> Dict:
         gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
@@ -71,6 +85,11 @@ class DeepfakeVideoDetector:
         return torch.tensor(frame, dtype=torch.float32).unsqueeze(0)
     
     def detect(self, video_path: str) -> Dict:
+        try:
+            validate_video_path(video_path)
+        except ValueError as e:
+            return {'error': str(e), 'is_deepfake': False, 'confidence': 0.0}
+        
         frames = self.extract_frames(video_path)
         
         if not frames:
@@ -183,4 +202,12 @@ class SimpleDeepfakeClassifier(nn.Module):
 detector = DeepfakeVideoDetector()
 
 def detect_video_deepfake(path: str) -> Dict:
-    return detector.detect(path)
+    try:
+        return detector.detect(path)
+    except Exception as e:
+        return {
+            'error': str(e),
+            'is_deepfake': False,
+            'confidence': 0.0,
+            'analysis_type': 'error'
+        }
