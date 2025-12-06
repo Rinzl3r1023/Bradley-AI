@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">⟐</div>
+      <h1>BRADLEY AI</h1>
+      <p class="tagline">Deepfake Guardian</p>
+    </div>
+    
+    <div class="status-section">
+      <div class="status-indicator">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">ONLINE</span>
+      </div>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-box">
+        <span class="stat-value" id="threats-count">0</span>
+        <span class="stat-label">Threats Blocked</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-value" id="scans-count">0</span>
+        <span class="stat-label">Media Scanned</span>
+      </div>
+    </div>
+    
+    <div class="last-threat" id="last-threat" style="display: none;">
+      <span class="threat-label">Last Threat:</span>
+      <span class="threat-url" id="threat-url"></span>
+    </div>
+    
+    <div class="controls">
+      <button id="toggle-btn" class="btn-primary">
+        <span id="toggle-text">DISABLE PROTECTION</span>
+      </button>
+      <button id="dashboard-btn" class="btn-secondary">
+        OPEN DASHBOARD
+      </button>
+    </div>
+    
+    <div class="footer">
+      <span class="version">v0.2.0</span>
+      <span class="divider">|</span>
+      <a href="https://bradley-ai.replit.app/beta" target="_blank">Join Beta</a>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

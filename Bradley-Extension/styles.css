@@ -1,0 +1,241 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Courier New', monospace;
+  background: #0a0a0a;
+  color: #00ffff;
+  width: 320px;
+  min-height: 400px;
+}
+
+.container {
+  padding: 20px;
+  background: 
+    linear-gradient(180deg, rgba(0, 255, 255, 0.05) 0%, transparent 50%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 255, 0.03) 2px,
+      rgba(0, 255, 255, 0.03) 4px
+    );
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+.logo {
+  font-size: 48px;
+  color: #00ffff;
+  text-shadow: 
+    0 0 10px rgba(0, 255, 255, 0.8),
+    0 0 20px rgba(0, 255, 255, 0.5),
+    0 0 30px rgba(0, 255, 255, 0.3);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.5); }
+  50% { opacity: 0.8; text-shadow: 0 0 15px rgba(0, 255, 255, 1), 0 0 30px rgba(0, 255, 255, 0.7); }
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: normal;
+  letter-spacing: 4px;
+  margin: 12px 0 4px 0;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.tagline {
+  font-size: 11px;
+  color: #666;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.status-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #00ff00;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+}
+
+.status-dot.online {
+  background: #00ff00;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+  animation: status-pulse 1.5s infinite;
+}
+
+.status-dot.offline {
+  background: #ff0000;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+}
+
+@keyframes status-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(0, 255, 0, 0.8); }
+  50% { box-shadow: 0 0 20px rgba(0, 255, 0, 1); }
+}
+
+#status-text {
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+#status-text.online {
+  color: #00ff00;
+}
+
+#status-text.offline {
+  color: #ff0000;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-box {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 16px 12px;
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 28px;
+  font-weight: bold;
+  color: #00ffff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  display: block;
+  font-size: 10px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.last-threat {
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.threat-label {
+  color: #ff6666;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.threat-url {
+  display: block;
+  color: #ff0000;
+  font-size: 12px;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+button {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, #00ffff 0%, #00cccc 100%);
+  color: #000;
+  font-weight: bold;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, #33ffff 0%, #00ffff 100%);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #00ffff;
+  border: 1px solid rgba(0, 255, 255, 0.5);
+}
+
+.btn-secondary:hover {
+  background: rgba(0, 255, 255, 0.1);
+  border-color: #00ffff;
+}
+
+.footer {
+  text-align: center;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+  font-size: 11px;
+  color: #444;
+}
+
+.footer a {
+  color: #00ffff;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+.divider {
+  margin: 0 8px;
+}
+
+.version {
+  color: #333;
+}
