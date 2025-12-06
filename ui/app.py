@@ -26,6 +26,96 @@ app.config["UPLOAD_FOLDER"] = os.path.join(os.path.dirname(os.path.dirname(__fil
 ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv', 'webm'}
 ALLOWED_AUDIO_EXTENSIONS = {'wav', 'mp3', 'ogg', 'flac', 'm4a'}
 
+import ipaddress
+import socket
+import re
+
+BLOCKED_HOSTS = [
+    'localhost', 'localhost.', 'localhost.localdomain',
+    'metadata.google.internal', 'metadata.google.internal.',
+    'metadata.internal', 'metadata.internal.',
+    '169.254.169.254', 'metadata', 'kubernetes.default'
+]
+
+IPV6_LITERAL_PATTERN = re.compile(r'^\[([^\]]+)\]')
+
+def is_private_ip(ip_str):
+    try:
+        ip_str = ip_str.strip('[]')
+        ip = ipaddress.ip_address(ip_str)
+        
+        return (
+            ip.is_private or
+            ip.is_loopback or
+            ip.is_link_local or
+            ip.is_reserved or
+            ip.is_multicast or
+            (hasattr(ip, 'is_global') and not ip.is_global and not ip.is_unspecified)
+        )
+    except ValueError:
+        return False
+
+def validate_media_url(url):
+    if not url:
+        return False, "URL is required"
+    
+    if len(url) > 2048:
+        return False, "URL too long"
+    
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(url)
+        
+        if parsed.scheme not in ('http', 'https'):
+            return False, "Only http/https URLs allowed"
+        
+        if not parsed.netloc:
+            return False, "Invalid URL format"
+        
+        host = parsed.netloc.lower()
+        
+        if '@' in host:
+            host = host.split('@')[-1]
+        
+        ipv6_match = IPV6_LITERAL_PATTERN.match(host)
+        if ipv6_match:
+            ipv6_addr = ipv6_match.group(1)
+            if is_private_ip(ipv6_addr):
+                return False, "Private IP addresses not allowed"
+            host = host[ipv6_match.end():]
+            if host.startswith(':'):
+                host = host[1:]
+            if not host:
+                return True, None
+        
+        if ':' in host:
+            host = host.split(':')[0]
+        
+        host = host.rstrip('.')
+        
+        if host in BLOCKED_HOSTS or f"{host}." in BLOCKED_HOSTS:
+            return False, "Internal URLs not allowed"
+        
+        if is_private_ip(host):
+            return False, "Private IP addresses not allowed"
+        
+        dangerous_patterns = [
+            'localhost', 'internal', 'metadata', 'kubernetes',
+            '127.', '10.', '192.168.', '172.16.', '172.17.', '172.18.',
+            '172.19.', '172.20.', '172.21.', '172.22.', '172.23.',
+            '172.24.', '172.25.', '172.26.', '172.27.', '172.28.',
+            '172.29.', '172.30.', '172.31.', '169.254.', '0.0.0.0',
+            'fd00:', 'fc00:', 'fe80:', '::1', '::ffff:'
+        ]
+        
+        for pattern in dangerous_patterns:
+            if pattern in host:
+                return False, "Potentially unsafe URL"
+        
+        return True, None
+    except Exception as e:
+        return False, f"Invalid URL: {str(e)}"
+
 db.init_app(app)
 
 from agents.swarm import BradleySwarm
@@ -334,14 +424,22 @@ def detect_media():
     try:
         data = request.get_json()
         if not data:
-            return jsonify({'error': 'No data provided'}), 400
+            response = jsonify({'error': 'No data provided', 'is_deepfake': False, 'confidence': 0})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response, 400
         
         media_url = data.get('url')
         media_type = data.get('type', 'video')
         page_url = data.get('page_url', '')
         
-        if not media_url:
-            return jsonify({'error': 'Media URL required'}), 400
+        is_valid, error_msg = validate_media_url(media_url)
+        if not is_valid:
+            response = jsonify({'error': error_msg, 'is_deepfake': False, 'confidence': 0})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response, 400
+        
+        if media_type not in ('video', 'audio'):
+            media_type = 'video'
         
         result = swarm.analyze_remote_media(media_url, media_type)
         
@@ -369,25 +467,40 @@ def detect_media():
         return response
     
     except Exception as e:
-        return jsonify({'error': str(e), 'is_deepfake': False, 'confidence': 0}), 500
+        response = jsonify({'error': str(e), 'is_deepfake': False, 'confidence': 0})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 500
 
 
-@app.route('/api/report', methods=['POST'])
+@app.route('/api/report', methods=['POST', 'OPTIONS'])
 def report_threat():
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, X-Bradley-Extension')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+    
     try:
         data = request.get_json()
         if not data:
-            return jsonify({'error': 'No data provided'}), 400
+            response = jsonify({'error': 'No data provided'})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response, 400
         
         print(f"[REPORT] Threat reported: {data}")
         
-        return jsonify({
+        response = jsonify({
             'success': True,
             'message': 'Threat reported successfully',
             'report_id': grid_node.node_id[:8] + '-' + str(int(datetime.utcnow().timestamp()))
         })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        response = jsonify({'error': str(e)})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 500
 
 
 @app.after_request
