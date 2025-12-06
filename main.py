@@ -5,4 +5,4 @@ print("Protecting the grid…\n")
 from agents.swarm import BradleySwarm
 
 swarm = BradleySwarm()
-swarm.run_sample_threat()
+swarm.run_real_threat_test()

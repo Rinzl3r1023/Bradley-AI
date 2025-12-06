@@ -242,6 +242,30 @@ class BradleySwarm:
         
         return result
     
+    def run_real_threat_test(self):
+        print("Running LIVE deepfake detection test…\n")
+        
+        video_result = detect_video_deepfake("https://i.imgur.com/4example.jpg")
+        audio_result = detect_audio_deepfake("https://example.com/fake-voice.wav")
+        
+        print(f"Video Analysis: {video_result}")
+        print(f"Audio Analysis: {audio_result}\n")
+        
+        self.scans_completed += 2
+        
+        if video_result.get("is_deepfake") or audio_result.get("is_deepfake"):
+            self.threats_detected += 1
+            print("THREAT DETECTED - relaying to grid nodes…")
+            relay_threat({"video": video_result, "audio": audio_result})
+        else:
+            print("All clear. Grid secure.")
+        
+        print("\nBradley AI v0.2 - Guardian standing by.")
+        return {
+            'video_result': video_result,
+            'audio_result': audio_result
+        }
+    
     def get_status(self):
         grok_status = get_grok_status()
         return {

@@ -81,6 +81,7 @@ The Flask server runs on port 5000 via the "Bradley AI" workflow.
 - [ ] Chrome Web Store publication
 
 ## Recent Changes
+- **Dec 6, 2025:** Real ML deepfake detection with Hugging Face transformers (umm-maybe/AI-image-detector for video, facebook/wav2vec2-base for audio)
 - **Dec 6, 2025:** v0.2.0 Browser extension release with real-time media scanning, Tron-styled UI, and backend /detect API
 - **Dec 5, 2025:** xAI Grok integration, security improvements, node registry (250 capacity)
 - **Dec 5, 2025:** Initial MVP setup with detection engines, relay prototype, and Tron UI

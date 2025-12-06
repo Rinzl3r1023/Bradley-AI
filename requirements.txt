@@ -1,6 +1,7 @@
 flask
 gunicorn
 torch
+transformers
 langgraph
 numpy
 opencv-python
@@ -11,3 +12,4 @@ requests
 python-multipart
 psycopg2-binary
 openai
+transformers
