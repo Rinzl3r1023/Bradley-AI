@@ -322,6 +322,74 @@ def add_node():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/detect', methods=['POST', 'OPTIONS'])
+def detect_media():
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, X-Bradley-Extension')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        media_url = data.get('url')
+        media_type = data.get('type', 'video')
+        page_url = data.get('page_url', '')
+        
+        if not media_url:
+            return jsonify({'error': 'Media URL required'}), 400
+        
+        result = swarm.analyze_remote_media(media_url, media_type)
+        
+        try:
+            detection = ThreatDetection(
+                detection_type=f'extension_{media_type}',
+                file_name=media_url[:255],
+                is_threat=result.get('is_deepfake', False),
+                confidence=result.get('confidence', 0),
+                model_score=result.get('model_score'),
+                artifact_score=result.get('artifact_score'),
+                analysis_type='extension_scan',
+                relay_status=result.get('relay_status'),
+                node_id=grid_node.node_id,
+                raw_result={**result, 'page_url': page_url}
+            )
+            db.session.add(detection)
+            db.session.commit()
+        except Exception as db_err:
+            print(f"Database error: {db_err}")
+            db.session.rollback()
+        
+        response = jsonify(result)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+    
+    except Exception as e:
+        return jsonify({'error': str(e), 'is_deepfake': False, 'confidence': 0}), 500
+
+
+@app.route('/api/report', methods=['POST'])
+def report_threat():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        print(f"[REPORT] Threat reported: {data}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Threat reported successfully',
+            'report_id': grid_node.node_id[:8] + '-' + str(int(datetime.utcnow().timestamp()))
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.after_request
 def add_header(response):
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'

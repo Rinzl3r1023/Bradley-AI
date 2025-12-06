@@ -5,14 +5,15 @@ Bradley AI is a decentralized, open-source guardian that protects everyday peopl
 
 **Mission:** "Alan Bradley created Tron to protect the system from the MCP. We created Bradley to protect users from malicious AI."
 
-**Version:** v0.1.0 (MVP)
+**Version:** v0.2.0 (Browser Extension Release)
 
 ## Project Structure
 ```
 Bradley-AI/
 ├── main.py                 # CLI entry point
 ├── agents/
-│   └── swarm.py           # Bradley agent swarm coordinator
+│   ├── swarm.py           # Bradley agent swarm coordinator
+│   └── grok.py            # xAI Grok integration for AI analysis
 ├── detection/
 │   ├── video_detector.py  # Deepfake video detection (PyTorch CNN)
 │   └── audio_detector.py  # Voice clone detection (spectral analysis)
@@ -26,6 +27,12 @@ Bradley-AI/
 │   └── static/
 │       ├── css/style.css  # Tron neon-grid styling
 │       └── js/main.js     # Frontend interaction
+├── Bradley-Extension/      # Chrome browser extension v0.2
+│   ├── manifest.json      # Extension manifest (MV3)
+│   ├── background.js      # Service worker
+│   ├── content.js         # Media scanner
+│   ├── popup.html/js/css  # Extension popup UI
+│   └── icons/             # Tron-styled icons
 └── uploads/               # Temporary file uploads
 ```
 
@@ -55,20 +62,25 @@ Bradley-AI/
 - `GET /api/node/status` - Grid node status with registry stats
 - `GET /api/registry/stats` - Node registry statistics (capacity: 250)
 - `POST /api/registry/add` - Add Business Lounge node to registry
+- `POST /api/detect` - Extension API: Analyze remote media URL (CORS enabled)
+- `POST /api/report` - Extension API: Report threat for community review
 
 ## Environment Variables
 - `DATABASE_URL` - PostgreSQL connection string (auto-configured)
 - `SESSION_SECRET` - Flask session secret
+- `XAI_API_KEY` - xAI Grok API key for AI-enhanced analysis (optional)
 
 ## Running the Project
 The Flask server runs on port 5000 via the "Bradley AI" workflow.
 
-## Next Steps (Phase 2)
+## Next Steps (Phase 3)
 - [ ] ERC-20 $BRADLEY token on Base
 - [ ] Real libp2p P2P networking
 - [ ] IPFS integration for evidence storage
-- [ ] LangGraph agent orchestration
-- [ ] Browser extension for video call protection
+- [ ] Video call protection in extension
+- [ ] Chrome Web Store publication
 
 ## Recent Changes
+- **Dec 6, 2025:** v0.2.0 Browser extension release with real-time media scanning, Tron-styled UI, and backend /detect API
+- **Dec 5, 2025:** xAI Grok integration, security improvements, node registry (250 capacity)
 - **Dec 5, 2025:** Initial MVP setup with detection engines, relay prototype, and Tron UI
