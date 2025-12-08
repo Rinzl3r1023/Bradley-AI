@@ -121,9 +121,12 @@ class BradleySwarm:
     def run_sample_threat(self):
         print("Scanning sample threat...")
         
+        test_image_url = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300"
+        test_audio_url = "https://huggingface.co/datasets/huggingface/deepfake-detection/resolve/main/sample_real.wav"
+        
         initial_state = {
-            "video_path": "sample.mp4",
-            "audio_path": "sample.wav",
+            "video_path": test_image_url,
+            "audio_path": test_audio_url,
             "video_result": {},
             "audio_result": {},
             "relay_status": "",
@@ -173,8 +176,11 @@ class BradleySwarm:
         }
     
     def _fallback_scan(self):
-        video_result = detect_video_deepfake("sample.mp4")
-        audio_result = detect_audio_deepfake("sample.wav")
+        test_image_url = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300"
+        test_audio_url = "https://huggingface.co/datasets/huggingface/deepfake-detection/resolve/main/sample_real.wav"
+        
+        video_result = detect_video_deepfake(test_image_url)
+        audio_result = detect_audio_deepfake(test_audio_url)
         
         is_threat = video_result.get('is_deepfake') or audio_result.get('is_deepfake')
         relay_status = relay_threat(video_result if is_threat else None)
@@ -223,8 +229,8 @@ class BradleySwarm:
     def run_real_threat_test(self):
         print("Running LIVE deepfake detection test…\n")
         
-        video_result = detect_video_deepfake("https://huggingface.co/datasets/huggingface/deepfake-detection/resolve/main/sample_fake.mp4")
-        audio_result = detect_audio_deepfake("https://huggingface.co/datasets/huggingface/deepfake-detection/resolve/main/sample_fake_voice.wav")
+        video_result = detect_video_deepfake("https://huggingface.co/datasets/huggingface/deepfake-detection/resolve/main/sample_real.jpg")
+        audio_result = detect_audio_deepfake("https://huggingface.co/datasets/huggingface/deepfake-detection/resolve/main/sample_real.wav")
         
         print(f"Video Analysis: {video_result}")
         print(f"Audio Analysis: {audio_result}\n")

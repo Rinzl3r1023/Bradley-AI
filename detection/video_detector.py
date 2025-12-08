@@ -186,7 +186,7 @@ class DeepfakeVideoDetector:
         frames = self.extract_frames(video_path)
         
         if not frames:
-            return self._simulate_detection(video_path)
+            return self._default_safe_result(video_path)
         
         frame_scores = []
         artifact_scores = []
@@ -223,19 +223,16 @@ class DeepfakeVideoDetector:
         
         return (blur_anomaly + edge_anomaly + freq_anomaly) / 3.0
     
-    def _simulate_detection(self, video_path: str) -> Dict:
-        np.random.seed(hash(video_path) % 2**32)
-        confidence = np.random.uniform(0.75, 0.98)
-        is_deepfake = confidence > 0.5
-        
+    def _default_safe_result(self, video_path: str) -> Dict:
         return {
-            'is_deepfake': is_deepfake,
-            'confidence': float(confidence),
+            'is_deepfake': False,
+            'confidence': 0.5,
             'frames_analyzed': 0,
-            'model_score': float(confidence),
+            'model_score': 0.5,
             'artifact_score': 0.0,
-            'analysis_type': 'simulated',
-            'note': 'Video file not found - using simulation mode'
+            'analysis_type': 'default',
+            'label': 'UNKNOWN',
+            'note': 'Video file not accessible - using conservative estimate'
         }
 
 
