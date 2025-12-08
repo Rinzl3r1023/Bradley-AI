@@ -4,10 +4,22 @@ from typing import Dict, Optional
 import warnings
 import requests
 import io
+import urllib.parse
+import logging
+import ipaddress
 
 warnings.filterwarnings('ignore')
+logging.basicConfig(level=logging.INFO)
 
 ALLOWED_AUDIO_FORMATS = ('.wav', '.mp3', '.ogg', '.flac', '.m4a')
+ALLOWED_SCHEMES = ['https', 'http']
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+
+BLOCKED_HOSTS = [
+    'localhost', '127.0.0.1', '0.0.0.0', '[::1]',
+    'metadata.google.internal', '169.254.169.254',
+    'metadata.aws.amazon.com', 'instance-data'
+]
 
 hf_voice_detector = None
 hf_audio_available = False
@@ -20,6 +32,52 @@ try:
 except Exception as e:
     print(f"[AUDIO] Hugging Face audio model not available, using built-in detector: {e}")
     hf_audio_available = False
+
+
+def is_private_ip(ip_str: str) -> bool:
+    try:
+        ip_str = ip_str.strip('[]')
+        ip = ipaddress.ip_address(ip_str)
+        return (ip.is_private or ip.is_loopback or ip.is_link_local or 
+                ip.is_reserved or ip.is_multicast or ip.is_unspecified)
+    except ValueError:
+        return False
+
+
+def validate_url(url: str) -> str:
+    parsed = urllib.parse.urlparse(url)
+    
+    if parsed.scheme not in ALLOWED_SCHEMES:
+        raise ValueError("Only HTTP/HTTPS URLs allowed")
+    
+    hostname = parsed.hostname or ''
+    hostname = hostname.rstrip('.').lower()
+    
+    if parsed.username or parsed.password:
+        hostname = hostname.split('@')[-1] if '@' in hostname else hostname
+    
+    for blocked in BLOCKED_HOSTS:
+        if blocked in hostname:
+            raise ValueError("Internal URLs not allowed")
+    
+    if is_private_ip(hostname):
+        raise ValueError("Private IP addresses not allowed")
+    
+    dangerous_patterns = ['localhost', '127.', '192.168.', '10.', '172.16.',
+                          'metadata', 'internal', '169.254', '::1', 'fd00:']
+    for pattern in dangerous_patterns:
+        if pattern in hostname:
+            raise ValueError("Blocked URL pattern detected")
+    
+    return url
+
+
+def validate_local_path(path: str) -> str:
+    abs_path = os.path.abspath(path)
+    cwd = os.getcwd()
+    if ".." in path or not abs_path.startswith(cwd):
+        raise ValueError("Invalid path - directory traversal not allowed")
+    return abs_path
 
 
 def validate_audio_path(path: str) -> None:
@@ -51,7 +109,7 @@ def detect_with_huggingface_audio(audio_path_or_url: str) -> Dict:
             "analysis_type": "transformer"
         }
     except Exception as e:
-        print(f"[AUDIO] HuggingFace detection failed: {e}")
+        logging.error(f"[AUDIO] HuggingFace detection failed: {e}")
         return None
 
 
@@ -242,34 +300,47 @@ detector = VoiceCloneDetector()
 def detect_audio_deepfake(url_or_path: str) -> Dict:
     try:
         if url_or_path.startswith("http"):
-            hf_result = detect_with_huggingface_audio(url_or_path)
-            if hf_result:
-                return hf_result
-            
-            np.random.seed(hash(url_or_path) % 2**32)
-            confidence = np.random.uniform(0.4, 0.85)
-            is_clone = confidence > 0.65
-            
-            return {
-                'is_deepfake': is_clone,
-                'confidence': float(confidence),
-                'voice_consistency': np.random.uniform(0.3, 0.9),
-                'anomaly_scores': {
-                    'pitch_variance': np.random.uniform(0.2, 0.8),
-                    'spectral_gaps': np.random.uniform(0.1, 0.6)
-                },
-                'analysis_type': 'remote_audio',
-                'label': 'FAKE' if is_clone else 'REAL'
-            }
+            try:
+                url = validate_url(url_or_path)
+                
+                hf_result = detect_with_huggingface_audio(url)
+                if hf_result:
+                    return hf_result
+                
+                np.random.seed(hash(url_or_path) % 2**32)
+                confidence = np.random.uniform(0.4, 0.85)
+                is_clone = confidence > 0.65
+                
+                return {
+                    'is_deepfake': is_clone,
+                    'confidence': float(confidence),
+                    'voice_consistency': np.random.uniform(0.3, 0.9),
+                    'anomaly_scores': {
+                        'pitch_variance': np.random.uniform(0.2, 0.8),
+                        'spectral_gaps': np.random.uniform(0.1, 0.6)
+                    },
+                    'analysis_type': 'remote_audio',
+                    'label': 'FAKE' if is_clone else 'REAL'
+                }
+            except ValueError as e:
+                logging.error(f"Validation error: {e}")
+                return {'error': str(e), 'is_deepfake': False, 'confidence': 0.0}
         
-        hf_result = detect_with_huggingface_audio(url_or_path)
+        try:
+            validated_path = validate_local_path(url_or_path)
+        except ValueError as e:
+            logging.error(f"Path validation error: {e}")
+            return {'error': str(e), 'is_deepfake': False, 'confidence': 0.0}
+        
+        hf_result = detect_with_huggingface_audio(validated_path)
         if hf_result:
             return hf_result
         
-        return detector.detect(url_or_path)
+        return detector.detect(validated_path)
     except Exception as e:
+        logging.critical(f"Unexpected error: {e}")
         return {
-            'error': str(e),
+            'error': 'Processing failed',
             'is_deepfake': False,
             'confidence': 0.0,
             'analysis_type': 'error'
