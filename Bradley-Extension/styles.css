@@ -239,3 +239,30 @@ button {
 .version {
   color: #333;
 }
+
+.threat-log {
+  margin-top: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.threat-entry {
+  background: rgba(255, 0, 0, 0.1);
+  border-left: 4px solid #ff0000;
+  padding: 10px;
+  margin: 6px 0;
+  font-size: 11px;
+  color: #ff6666;
+  border-radius: 0 4px 4px 0;
+}
+
+.threat-entry strong {
+  color: #ff0000;
+}
+
+.threat-entry small {
+  color: #666;
+  display: block;
+  margin-top: 4px;
+}
