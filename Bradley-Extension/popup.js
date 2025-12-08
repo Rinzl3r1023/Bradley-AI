@@ -1,4 +1,4 @@
-const API_BASE = 'https://bradley-ai.replit.app';
+const API_BASE = 'https://bradleyai.replit.app';
 
 document.addEventListener('DOMContentLoaded', () => {
   loadStatus();
