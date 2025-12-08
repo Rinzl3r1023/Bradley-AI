@@ -14,12 +14,18 @@ logging.basicConfig(level=logging.INFO)
 ALLOWED_AUDIO_FORMATS = ('.wav', '.mp3', '.ogg', '.flac', '.m4a')
 ALLOWED_SCHEMES = ['https', 'http']
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+REQUEST_TIMEOUT = 15
 
 BLOCKED_HOSTS = [
     'localhost', '127.0.0.1', '0.0.0.0', '[::1]',
     'metadata.google.internal', '169.254.169.254',
     'metadata.aws.amazon.com', 'instance-data'
 ]
+
+SAFE_HEADERS = {
+    'User-Agent': 'BradleyAI/0.2 AudioDetector',
+    'Accept': 'audio/*,*/*;q=0.8'
+}
 
 hf_voice_detector = None
 hf_audio_available = False
@@ -78,6 +84,28 @@ def validate_local_path(path: str) -> str:
     if ".." in path or not abs_path.startswith(cwd):
         raise ValueError("Invalid path - directory traversal not allowed")
     return abs_path
+
+
+def safe_request(url: str, method: str = 'get', stream: bool = False) -> requests.Response:
+    validated_url = validate_url(url)
+    
+    if method == 'head':
+        response = requests.head(
+            validated_url, 
+            timeout=REQUEST_TIMEOUT, 
+            allow_redirects=True,
+            headers=SAFE_HEADERS
+        )
+    else:
+        response = requests.get(
+            validated_url, 
+            timeout=REQUEST_TIMEOUT, 
+            stream=stream,
+            headers=SAFE_HEADERS
+        )
+    
+    response.raise_for_status()
+    return response
 
 
 def validate_audio_path(path: str) -> None:
@@ -232,7 +260,7 @@ class VoiceCloneDetector:
             return {'error': str(e), 'is_deepfake': False, 'confidence': 0.0}
         
         if audio is None:
-            return self._simulate_detection(audio_path)
+            return self._default_safe_result(audio_path)
         
         features = self.extract_features(audio)
         anomaly_scores = self.analyze_artifacts(features)
@@ -277,20 +305,16 @@ class VoiceCloneDetector:
         else:
             return 0.3
     
-    def _simulate_detection(self, audio_path: str) -> Dict:
-        np.random.seed(hash(audio_path) % 2**32)
-        confidence = np.random.uniform(0.70, 0.95)
-        is_clone = confidence > 0.5
-        
+    def _default_safe_result(self, audio_path: str) -> Dict:
         return {
-            'is_deepfake': is_clone,
-            'confidence': float(confidence),
+            'is_deepfake': False,
+            'confidence': 0.5,
             'features': {},
             'anomaly_scores': {},
-            'voice_consistency': 0.0,
-            'analysis_type': 'simulated',
-            'label': 'FAKE' if is_clone else 'REAL',
-            'note': 'Audio file not found - using simulation mode'
+            'voice_consistency': 0.5,
+            'analysis_type': 'default',
+            'label': 'UNKNOWN',
+            'note': 'Audio file not accessible - using conservative estimate'
         }
 
 
@@ -301,30 +325,63 @@ def detect_audio_deepfake(url_or_path: str) -> Dict:
     try:
         if url_or_path.startswith("http"):
             try:
-                url = validate_url(url_or_path)
+                head_response = safe_request(url_or_path, method='head')
+                content_length = head_response.headers.get('content-length')
+                if content_length and int(content_length) > MAX_FILE_SIZE:
+                    raise ValueError(f"File too large (max {MAX_FILE_SIZE // 1024 // 1024}MB)")
                 
-                hf_result = detect_with_huggingface_audio(url)
+                hf_result = detect_with_huggingface_audio(url_or_path)
                 if hf_result:
                     return hf_result
                 
-                np.random.seed(hash(url_or_path) % 2**32)
-                confidence = np.random.uniform(0.4, 0.85)
-                is_clone = confidence > 0.65
+                response = safe_request(url_or_path, stream=True)
+                audio_data = io.BytesIO(response.content)
                 
-                return {
-                    'is_deepfake': is_clone,
-                    'confidence': float(confidence),
-                    'voice_consistency': np.random.uniform(0.3, 0.9),
-                    'anomaly_scores': {
-                        'pitch_variance': np.random.uniform(0.2, 0.8),
-                        'spectral_gaps': np.random.uniform(0.1, 0.6)
-                    },
-                    'analysis_type': 'remote_audio',
-                    'label': 'FAKE' if is_clone else 'REAL'
-                }
+                try:
+                    import wave
+                    audio_data.seek(0)
+                    with wave.open(audio_data, 'rb') as wf:
+                        n_frames = wf.getnframes()
+                        raw_audio = wf.readframes(n_frames)
+                        audio = np.frombuffer(raw_audio, dtype=np.int16).astype(np.float32)
+                        audio = audio / 32768.0
+                        
+                        features = detector.extract_features(audio)
+                        anomaly_scores = detector.analyze_artifacts(features)
+                        combined_score = np.mean(list(anomaly_scores.values()))
+                        voice_consistency = detector._analyze_voice_consistency(audio)
+                        final_confidence = 0.6 * combined_score + 0.4 * voice_consistency
+                        is_clone = final_confidence > detector.confidence_threshold
+                        
+                        return {
+                            'is_deepfake': is_clone,
+                            'confidence': float(final_confidence),
+                            'voice_consistency': float(voice_consistency),
+                            'anomaly_scores': {
+                                'pitch_variance': float(anomaly_scores.get('zcr', 0.5)),
+                                'spectral_gaps': float(anomaly_scores.get('spectral', 0.3))
+                            },
+                            'analysis_type': 'remote_audio',
+                            'label': 'FAKE' if is_clone else 'REAL'
+                        }
+                except Exception as audio_err:
+                    logging.warning(f"Audio parsing failed, using spectral estimate: {audio_err}")
+                    return {
+                        'is_deepfake': False,
+                        'confidence': 0.5,
+                        'voice_consistency': 0.5,
+                        'anomaly_scores': {'pitch_variance': 0.5, 'spectral_gaps': 0.3},
+                        'analysis_type': 'remote_audio',
+                        'label': 'UNKNOWN',
+                        'note': 'Could not parse audio format'
+                    }
+                    
             except ValueError as e:
                 logging.error(f"Validation error: {e}")
                 return {'error': str(e), 'is_deepfake': False, 'confidence': 0.0}
+            except requests.RequestException as e:
+                logging.error(f"Network error: {e}")
+                return {'error': 'Failed to fetch URL', 'is_deepfake': False, 'confidence': 0.0}
         
         try:
             validated_path = validate_local_path(url_or_path)
