@@ -7,9 +7,22 @@ import torch.nn as nn
 from PIL import Image
 import io
 import requests
+import urllib.parse
+import logging
+import ipaddress
+
+logging.basicConfig(level=logging.INFO)
 
 ALLOWED_VIDEO_FORMATS = ('.mp4', '.avi', '.mov', '.mkv', '.webm')
 ALLOWED_IMAGE_FORMATS = ('.jpg', '.jpeg', '.png', '.gif', '.webp')
+ALLOWED_SCHEMES = ['https', 'http']
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+
+BLOCKED_HOSTS = [
+    'localhost', '127.0.0.1', '0.0.0.0', '[::1]',
+    'metadata.google.internal', '169.254.169.254',
+    'metadata.aws.amazon.com', 'instance-data'
+]
 
 hf_detector = None
 hf_available = False
@@ -24,11 +37,50 @@ except Exception as e:
     hf_available = False
 
 
-def validate_video_path(path: str) -> None:
-    if not path:
-        raise ValueError("Video path cannot be empty")
-    if not path.lower().endswith(ALLOWED_VIDEO_FORMATS + ALLOWED_IMAGE_FORMATS):
-        raise ValueError(f"Invalid file type. Allowed formats: {', '.join(ALLOWED_VIDEO_FORMATS + ALLOWED_IMAGE_FORMATS)}")
+def is_private_ip(ip_str: str) -> bool:
+    try:
+        ip_str = ip_str.strip('[]')
+        ip = ipaddress.ip_address(ip_str)
+        return (ip.is_private or ip.is_loopback or ip.is_link_local or 
+                ip.is_reserved or ip.is_multicast or ip.is_unspecified)
+    except ValueError:
+        return False
+
+
+def validate_url(url: str) -> str:
+    parsed = urllib.parse.urlparse(url)
+    
+    if parsed.scheme not in ALLOWED_SCHEMES:
+        raise ValueError("Only HTTP/HTTPS URLs allowed")
+    
+    hostname = parsed.hostname or ''
+    hostname = hostname.rstrip('.').lower()
+    
+    if parsed.username or parsed.password:
+        hostname = hostname.split('@')[-1] if '@' in hostname else hostname
+    
+    for blocked in BLOCKED_HOSTS:
+        if blocked in hostname:
+            raise ValueError("Internal URLs not allowed")
+    
+    if is_private_ip(hostname):
+        raise ValueError("Private IP addresses not allowed")
+    
+    dangerous_patterns = ['localhost', '127.', '192.168.', '10.', '172.16.',
+                          'metadata', 'internal', '169.254', '::1', 'fd00:']
+    for pattern in dangerous_patterns:
+        if pattern in hostname:
+            raise ValueError("Blocked URL pattern detected")
+    
+    return url
+
+
+def validate_local_path(path: str) -> str:
+    abs_path = os.path.abspath(path)
+    cwd = os.getcwd()
+    if ".." in path or not abs_path.startswith(cwd):
+        raise ValueError("Invalid path - directory traversal not allowed")
+    return abs_path
 
 
 def detect_with_huggingface(image: Image.Image) -> Dict:
@@ -56,7 +108,7 @@ def detect_with_huggingface(image: Image.Image) -> Dict:
             "analysis_type": "transformer"
         }
     except Exception as e:
-        print(f"[VIDEO] HuggingFace detection failed: {e}")
+        logging.error(f"[VIDEO] HuggingFace detection failed: {e}")
         return None
 
 
@@ -131,11 +183,6 @@ class DeepfakeVideoDetector:
         return torch.tensor(frame, dtype=torch.float32).unsqueeze(0)
     
     def detect(self, video_path: str) -> Dict:
-        try:
-            validate_video_path(video_path)
-        except ValueError as e:
-            return {'error': str(e), 'is_deepfake': False, 'confidence': 0.0}
-        
         frames = self.extract_frames(video_path)
         
         if not frames:
@@ -252,11 +299,18 @@ def detect_video_deepfake(url_or_path: str) -> Dict:
     try:
         if url_or_path.startswith("http"):
             try:
-                response = requests.get(url_or_path, timeout=10, stream=True)
+                url = validate_url(url_or_path)
+                
+                head_response = requests.head(url, timeout=10, allow_redirects=True)
+                content_length = head_response.headers.get('content-length')
+                if content_length and int(content_length) > MAX_FILE_SIZE:
+                    raise ValueError(f"File too large (max {MAX_FILE_SIZE // 1024 // 1024}MB)")
+                
+                response = requests.get(url, timeout=15, stream=True)
                 response.raise_for_status()
                 
                 content_type = response.headers.get('content-type', '')
-                if 'image' in content_type or url_or_path.lower().endswith(ALLOWED_IMAGE_FORMATS):
+                if 'image' in content_type or url.lower().endswith(ALLOWED_IMAGE_FORMATS):
                     img = Image.open(io.BytesIO(response.content)).convert('RGB')
                     
                     hf_result = detect_with_huggingface(img)
@@ -295,12 +349,17 @@ def detect_video_deepfake(url_or_path: str) -> Dict:
                         'label': 'FAKE' if is_deepfake else 'REAL',
                         'note': 'Video streamed and analyzed'
                     }
-            except Exception as e:
+            except ValueError as e:
+                logging.error(f"Validation error: {e}")
                 return {'error': str(e), 'is_deepfake': False, 'confidence': 0.0}
+            except requests.RequestException as e:
+                logging.error(f"Network error: {e}")
+                return {'error': 'Failed to fetch URL', 'is_deepfake': False, 'confidence': 0.0}
         
         if url_or_path.lower().endswith(ALLOWED_IMAGE_FORMATS):
             try:
-                img = Image.open(url_or_path).convert('RGB')
+                validated_path = validate_local_path(url_or_path)
+                img = Image.open(validated_path).convert('RGB')
                 
                 hf_result = detect_with_huggingface(img)
                 if hf_result:
@@ -326,13 +385,15 @@ def detect_video_deepfake(url_or_path: str) -> Dict:
                     'analysis_type': 'local_image',
                     'label': 'FAKE' if is_deepfake else 'REAL'
                 }
-            except Exception as e:
+            except ValueError as e:
+                logging.error(f"Path validation error: {e}")
                 return {'error': str(e), 'is_deepfake': False, 'confidence': 0.0}
         
         return detector.detect(url_or_path)
     except Exception as e:
+        logging.critical(f"Unexpected error: {e}")
         return {
-            'error': str(e),
+            'error': 'Processing failed',
             'is_deepfake': False,
             'confidence': 0.0,
             'analysis_type': 'error'

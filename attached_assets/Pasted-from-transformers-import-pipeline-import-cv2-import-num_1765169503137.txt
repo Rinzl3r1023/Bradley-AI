@@ -1,0 +1,63 @@
+from transformers import pipeline
+import cv2
+import numpy as np
+from PIL import Image
+import io
+import requests
+import urllib.parse
+import secrets
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+ALLOWED_DOMAINS = ['huggingface.co', 'cdn.huggingface.co']  # Trusted only
+ALLOWED_SCHEMES = ['https']
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+
+def validate_url(url: str) -> str:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in ALLOWED_SCHEMES:
+        raise ValueError("Only HTTPS URLs allowed")
+    if parsed.netloc not in ALLOWED_DOMAINS:
+        raise ValueError("Domain not whitelisted")
+    return url
+
+def detect_video_deepfake(url_or_path):
+    try:
+        # Handle URL or local path
+        if url_or_path.startswith("http"):
+            url = validate_url(url_or_path)
+            response = requests.head(url, timeout=10)
+            if 'content-length' in response.headers and int(response.headers['content-length']) > MAX_FILE_SIZE:
+                raise ValueError("File too large")
+            img_response = requests.get(url, timeout=10)
+            img = Image.open(io.BytesIO(img_response.content))
+        else:
+            # Local path validation (prevent traversal)
+            abs_path = os.path.abspath(url_or_path)
+            if ".." in url_or_path or not abs_path.startswith(os.getcwd()):
+                raise ValueError("Invalid path")
+            img = Image.open(url_or_path)
+        
+        # Real deepfake classifier (Hugging Face 2025 model)
+        detector = pipeline("image-classification", model="deepfake-detection/vit-base-deepfake")
+        result = detector(img)
+        
+        # Parse result
+        score = result[0]['score'] if result[0]['label'] == 'FAKE' else 1 - result[0]['score']
+        is_fake = score > 0.7
+        
+        return {
+            "is_deepfake": is_fake,
+            "confidence": round(score, 3),
+            "label": "FAKE" if is_fake else "REAL"
+        }
+    except ValueError as e:
+        logging.error(f"Validation error: {e}")
+        return {"error": str(e), "is_deepfake": False, "confidence": 0.0}
+    except requests.RequestException as e:
+        logging.error(f"Network error: {e}")
+        return {"error": "Failed to fetch URL", "is_deepfake": False, "confidence": 0.0}
+    except Exception as e:
+        logging.critical(f"Unexpected error: {e}")
+        return {"error": "Processing failed", "is_deepfake": False, "confidence": 0.0}
