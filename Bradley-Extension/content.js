@@ -1,4 +1,4 @@
-const BRADLEY_API = 'https://bradley-ai.replit.app';
+const BRADLEY_API = 'https://bradleyai.replit.app';
 const SCAN_INTERVAL = 5000;
 const CONFIDENCE_THRESHOLD = 0.85;
 
