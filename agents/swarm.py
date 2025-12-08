@@ -239,12 +239,12 @@ class BradleySwarm:
         
         if video_result.get("is_deepfake", False) or audio_result.get("is_deepfake", False):
             self.threats_detected += 1
-            print("THREAT DETECTED - relaying to grid nodes…")
-            relay_threat({"video": video_result, "audio": audio_result})
+            print("⚡ THREAT DETECTED — relaying to decentralized grid…")
+            relay_threat({"video": video_result, "audio": audio_result, "is_deepfake": True})
         else:
             print("All clear. Grid secure.")
         
-        print("\nBradley AI v0.2 - Guardian standing by.")
+        print("\nBradley AI v0.3 — Guardian standing by.")
         return {
             'video_result': video_result,
             'audio_result': audio_result

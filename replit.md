@@ -5,7 +5,7 @@ Bradley AI is a decentralized, open-source guardian that protects everyday peopl
 
 **Mission:** "Alan Bradley created Tron to protect the system from the MCP. We created Bradley to protect users from malicious AI."
 
-**Version:** v0.2.0 (Browser Extension Release)
+**Version:** v0.3.0 (Decentralized Relay Network)
 
 ## Project Structure
 ```
@@ -45,7 +45,7 @@ Bradley-AI/
 ## Key Features (MVP)
 1. **Deepfake Video Detection** - CNN-based analysis with artifact detection
 2. **Voice Clone Detection** - Spectral analysis and consistency checking
-3. **Grid Relay Network** - Simulated P2P threat broadcasting
+3. **Grid Relay Network** - Decentralized P2P threat broadcasting with IPFS storage
 4. **Threat Logging** - PostgreSQL database for detection history
 5. **Closed Beta Signup** - Onboarding for Business Lounge members
 6. **Tron UI** - Cyberpunk neon-grid interface
@@ -73,14 +73,15 @@ Bradley-AI/
 ## Running the Project
 The Flask server runs on port 5000 via the "Bradley AI" workflow.
 
-## Next Steps (Phase 3)
+## Next Steps (Phase 4)
 - [ ] ERC-20 $BRADLEY token on Base
-- [ ] Real libp2p P2P networking
-- [ ] IPFS integration for evidence storage
+- [ ] Real libp2p P2P networking (mesh topology)
 - [ ] Video call protection in extension
 - [ ] Chrome Web Store publication
 
 ## Recent Changes
+- **Dec 8, 2025:** v0.3.0 Decentralized relay network with IPFS integration for permanent threat storage
+- **Dec 8, 2025:** Enhanced extension alerts: red badge counter, toast notifications, scrollable threat log
 - **Dec 6, 2025:** Real ML deepfake detection with Hugging Face transformers (umm-maybe/AI-image-detector for video, facebook/wav2vec2-base for audio)
 - **Dec 6, 2025:** v0.2.0 Browser extension release with real-time media scanning, Tron-styled UI, and backend /detect API
 - **Dec 5, 2025:** xAI Grok integration, security improvements, node registry (250 capacity)
