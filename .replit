@@ -5,7 +5,7 @@ integrations = ["python_database:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["ffmpeg-full", "freetype", "glibcLocales", "lcms2", "libGL", "libGLU", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "tcl", "tk", "zlib"]
+packages = ["ffmpeg-full", "freetype", "glibcLocales", "kubo", "lcms2", "libGL", "libGLU", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "tcl", "tk", "zlib"]
 
 [workflows]
 runButton = "Project"
@@ -42,6 +42,10 @@ externalPort = 3001
 [[ports]]
 localPort = 42937
 externalPort = 3000
+
+[[ports]]
+localPort = 44941
+externalPort = 3002
 
 [deployment]
 deploymentTarget = "autoscale"
