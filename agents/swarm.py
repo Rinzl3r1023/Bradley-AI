@@ -191,39 +191,17 @@ class BradleySwarm:
     def analyze_remote_media(self, url: str, media_type: str = 'video'):
         print(f"[EXTENSION] Analyzing remote {media_type}: {url[:50]}...")
         
-        import random
-        import hashlib
-        
-        url_hash = hashlib.md5(url.encode()).hexdigest()
-        random.seed(url_hash)
-        
-        confidence = random.uniform(0.3, 0.98)
-        is_deepfake = confidence > 0.85
-        
         if media_type == 'video':
-            result = {
-                'is_deepfake': is_deepfake,
-                'confidence': confidence,
-                'model_score': confidence,
-                'artifact_score': random.uniform(0.1, 0.5) if is_deepfake else random.uniform(0.0, 0.2),
-                'frames_analyzed': random.randint(30, 120),
-                'analysis_type': 'remote_video',
-                'media_url': url[:255]
-            }
+            result = detect_video_deepfake(url)
+            result['media_url'] = url[:255]
         else:
-            result = {
-                'is_deepfake': is_deepfake,
-                'confidence': confidence,
-                'voice_consistency': random.uniform(0.0, 0.5) if is_deepfake else random.uniform(0.7, 1.0),
-                'anomaly_scores': {
-                    'pitch_variance': random.uniform(0.2, 0.8),
-                    'spectral_gaps': random.uniform(0.1, 0.6)
-                },
-                'analysis_type': 'remote_audio',
-                'media_url': url[:255]
-            }
+            result = detect_audio_deepfake(url)
+            result['media_url'] = url[:255]
         
         self.scans_completed += 1
+        is_deepfake = result.get('is_deepfake', False)
+        confidence = result.get('confidence', 0)
+        
         if is_deepfake:
             self.threats_detected += 1
             result['relay_status'] = relay_threat(result)
@@ -245,15 +223,15 @@ class BradleySwarm:
     def run_real_threat_test(self):
         print("Running LIVE deepfake detection test…\n")
         
-        video_result = detect_video_deepfake("https://i.imgur.com/4example.jpg")
-        audio_result = detect_audio_deepfake("https://example.com/fake-voice.wav")
+        video_result = detect_video_deepfake("https://huggingface.co/datasets/huggingface/deepfake-detection/resolve/main/sample_fake.mp4")
+        audio_result = detect_audio_deepfake("https://huggingface.co/datasets/huggingface/deepfake-detection/resolve/main/sample_fake_voice.wav")
         
         print(f"Video Analysis: {video_result}")
         print(f"Audio Analysis: {audio_result}\n")
         
         self.scans_completed += 2
         
-        if video_result.get("is_deepfake") or audio_result.get("is_deepfake"):
+        if video_result.get("is_deepfake", False) or audio_result.get("is_deepfake", False):
             self.threats_detected += 1
             print("THREAT DETECTED - relaying to grid nodes…")
             relay_threat({"video": video_result, "audio": audio_result})
