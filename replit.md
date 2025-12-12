@@ -5,7 +5,7 @@ Bradley AI is a decentralized, open-source guardian that protects everyday peopl
 
 **Mission:** "Alan Bradley created Tron to protect the system from the MCP. We created Bradley to protect users from malicious AI."
 
-**Version:** v0.3.0 (Decentralized Relay Network)
+**Version:** v1.1.0 (XSS-Proof Extension)
 
 ## Project Structure
 ```
@@ -27,7 +27,7 @@ Bradley-AI/
 │   └── static/
 │       ├── css/style.css  # Tron neon-grid styling
 │       └── js/main.js     # Frontend interaction
-├── Bradley-Extension/      # Chrome browser extension v0.2
+├── Bradley-Extension/      # Chrome browser extension v1.1
 │   ├── manifest.json      # Extension manifest (MV3)
 │   ├── background.js      # Service worker
 │   ├── content.js         # Media scanner
@@ -80,6 +80,7 @@ The Flask server runs on port 5000 via the "Bradley AI" workflow.
 - [ ] Chrome Web Store publication
 
 ## Recent Changes
+- **Dec 12, 2025:** Extension v1.1.0 Final - 100% XSS-proof, zero innerHTML with external data, DOM API only
 - **Dec 12, 2025:** Extension v1.0.0 Final - class-based architecture, rate limiting, debounce, LRU cache, consent dialog
 - **Dec 12, 2025:** Production ML models: DeepFake-O-Meter v2 for video, AASIST for audio with librosa @ 16kHz
 - **Dec 12, 2025:** New API endpoints: `/detect_video_deepfake` and `/detect_audio_deepfake` with full CORS
