@@ -8,45 +8,42 @@ import logging
 import secrets
 import asyncio
 from typing import Dict, List, Optional
+from collections import defaultdict
 
 logging.basicConfig(level=logging.INFO)
 
 GRID_SECRET_KEY = os.environ.get('GRID_SECRET_KEY', secrets.token_hex(32))
-IPFS_GATEWAY = "https://ipfs.io"
+IPFS_GATEWAY = os.environ.get('IPFS_GATEWAY', 'https://ipfs.io')
 IPFS_API_URL = "https://ipfs.infura.io:5001"
-MAX_BROADCASTS_PER_MIN = 10
-MAX_THREAT_LOG = 1000
-MAX_PEERS = 250
+IPFS_PROJECT_ID = os.environ.get('IPFS_PROJECT_ID')
+IPFS_PROJECT_SECRET = os.environ.get('IPFS_PROJECT_SECRET')
+ENCRYPTION_KEY = os.environ.get('GRID_ENCRYPTION_KEY', GRID_SECRET_KEY)
 
 PEERS: List[str] = []
 THREAT_LOG: List[Dict] = []
 BROADCAST_TIMESTAMPS: Dict[str, List[float]] = {}
+NODE_REPUTATION: Dict[str, float] = {}
 NODE_ID = secrets.token_hex(16)
+
+MAX_BROADCASTS_PER_MIN = 10
+MAX_THREAT_LOG = 1000
+MAX_PEERS = 250
+TIMESTAMP_TOLERANCE = 300
 
 
 def verify_signature(node_id: str, signature: str, timestamp: float, data: Dict) -> bool:
-    """HMAC-SHA256 signature verification (anti-replay + authenticity)"""
-    if abs(time.time() - timestamp) > 300:
+    """HMAC-SHA256 signature verification with anti-replay"""
+    if abs(time.time() - timestamp) > TIMESTAMP_TOLERANCE:
         return False
-    
     message = f"{node_id}:{timestamp}:{json.dumps(data, sort_keys=True)}"
-    expected = hmac.new(
-        GRID_SECRET_KEY.encode(),
-        message.encode(),
-        hashlib.sha256
-    ).hexdigest()
-    
+    expected = hmac.new(GRID_SECRET_KEY.encode(), message.encode(), hashlib.sha256).hexdigest()
     return hmac.compare_digest(expected, signature)
 
 
 def create_signature(node_id: str, timestamp: float, data: Dict) -> str:
     """Create HMAC-SHA256 signature for outgoing messages"""
     message = f"{node_id}:{timestamp}:{json.dumps(data, sort_keys=True)}"
-    return hmac.new(
-        GRID_SECRET_KEY.encode(),
-        message.encode(),
-        hashlib.sha256
-    ).hexdigest()
+    return hmac.new(GRID_SECRET_KEY.encode(), message.encode(), hashlib.sha256).hexdigest()
 
 
 def rate_limit_node(node_id: str) -> bool:
@@ -75,14 +72,52 @@ def validate_threat_data(data: Dict) -> bool:
     return True
 
 
-def publish_to_ipfs(data: Dict) -> Optional[str]:
-    """Publish to IPFS with fallback to simulated CID"""
+def encrypt_data(data: Dict) -> bytes:
+    """Encrypt data with Fernet (optional)"""
     try:
-        json_data = json.dumps(data)
-        files = {'file': ('threat.json', json_data)}
+        from cryptography.fernet import Fernet
+        key = ENCRYPTION_KEY[:32].ljust(32, '0')
+        import base64
+        fernet_key = base64.urlsafe_b64encode(key.encode())
+        fernet = Fernet(fernet_key)
+        return fernet.encrypt(json.dumps(data).encode())
+    except ImportError:
+        return json.dumps(data).encode()
+    except Exception as e:
+        logging.warning(f"Encryption failed: {e}")
+        return json.dumps(data).encode()
+
+
+def decrypt_data(encrypted: bytes) -> Dict:
+    """Decrypt data with Fernet (optional)"""
+    try:
+        from cryptography.fernet import Fernet
+        key = ENCRYPTION_KEY[:32].ljust(32, '0')
+        import base64
+        fernet_key = base64.urlsafe_b64encode(key.encode())
+        fernet = Fernet(fernet_key)
+        return json.loads(fernet.decrypt(encrypted))
+    except ImportError:
+        return json.loads(encrypted)
+    except Exception as e:
+        logging.warning(f"Decryption failed: {e}")
+        return json.loads(encrypted)
+
+
+def publish_to_ipfs(data: Dict) -> Optional[str]:
+    """Publish to IPFS with optional encryption"""
+    try:
+        payload = encrypt_data(data)
+        files = {'file': ('threat.json', payload)}
+        
+        auth = None
+        if IPFS_PROJECT_ID and IPFS_PROJECT_SECRET:
+            auth = (IPFS_PROJECT_ID, IPFS_PROJECT_SECRET)
+        
         response = requests.post(
             f"{IPFS_API_URL}/api/v0/add",
             files=files,
+            auth=auth,
             timeout=10
         )
         if response.status_code == 200:
@@ -91,7 +126,7 @@ def publish_to_ipfs(data: Dict) -> Optional[str]:
             logging.info(f"Published to IPFS: {cid}")
             return cid
     except requests.exceptions.RequestException as e:
-        logging.warning(f"IPFS publish via Infura failed: {e}")
+        logging.warning(f"IPFS publish failed: {e}")
     
     cid = f"Qm{secrets.token_hex(22)}"
     logging.info(f"Using simulated CID (gateway mode): {cid}")
@@ -112,8 +147,10 @@ class NodeRegistry:
             'registered_at': time.time(),
             'last_seen': time.time(),
             'threats_relayed': 0,
-            'is_active': True
+            'is_active': True,
+            'reputation': 1.0
         }
+        NODE_REPUTATION[node_id] = 1.0
         return True
     
     def update_heartbeat(self, node_id: str) -> None:
@@ -131,6 +168,11 @@ class NodeRegistry:
     def increment_threats(self, node_id: str) -> None:
         if node_id in self.nodes:
             self.nodes[node_id]['threats_relayed'] += 1
+    
+    def update_reputation(self, node_id: str, delta: float) -> None:
+        if node_id in self.nodes:
+            self.nodes[node_id]['reputation'] = max(0, min(1, self.nodes[node_id]['reputation'] + delta))
+            NODE_REPUTATION[node_id] = self.nodes[node_id]['reputation']
     
     def deactivate(self, node_id: str) -> None:
         if node_id in self.nodes:
@@ -176,6 +218,7 @@ class GridNode:
             PEERS.append(peer_endpoint)
             self.connected_peers.append(peer_id)
             self.registry.register(peer_id, peer_endpoint)
+            NODE_REPUTATION[peer_id] = 1.0
             logging.info(f"Peer added: {peer_id[:8]}@{peer_endpoint}")
             return True
         return False
@@ -244,7 +287,11 @@ class GridNode:
             "source_node": self.node_id,
             "timestamp": ts
         }
-        signature = create_signature(self.node_id, ts, payload)
+        signature = hmac.new(
+            GRID_SECRET_KEY.encode(),
+            json.dumps(payload, sort_keys=True).encode(),
+            hashlib.sha256
+        ).hexdigest()
         
         for peer in PEERS[:50]:
             try:
@@ -255,6 +302,10 @@ class GridNode:
                 )
             except Exception:
                 pass
+
+    def publish_to_ipfs(self, data: Dict) -> Optional[str]:
+        """Publish encrypted to IPFS"""
+        return publish_to_ipfs(data)
 
     def get_status(self) -> Dict:
         return {

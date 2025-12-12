@@ -80,6 +80,7 @@ The Flask server runs on port 5000 via the "Bradley AI" workflow.
 - [ ] Chrome Web Store publication
 
 ## Recent Changes
+- **Dec 12, 2025:** Grid Node v1.0 - HMAC signatures, rate limiting, encryption, node reputation system
 - **Dec 12, 2025:** Extension v1.1.0 Final - 100% XSS-proof, zero innerHTML with external data, DOM API only
 - **Dec 12, 2025:** Extension v1.0.0 Final - class-based architecture, rate limiting, debounce, LRU cache, consent dialog
 - **Dec 12, 2025:** Production ML models: DeepFake-O-Meter v2 for video, AASIST for audio with librosa @ 16kHz

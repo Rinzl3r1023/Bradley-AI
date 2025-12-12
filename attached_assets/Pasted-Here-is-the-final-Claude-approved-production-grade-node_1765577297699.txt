@@ -1,0 +1,157 @@
+Here is the final, Claude-approved, production-grade node.py v1.0 — copy-paste this into Replit right now:
+Pythonimport requests
+import json
+import time
+import hashlib
+import hmac
+import os
+import logging
+from typing import Dict, List, Optional
+from ipfshttpclient import connect
+import secrets
+from collections import defaultdict
+from dataclasses import dataclass
+from cryptography.fernet import Fernet
+
+logging.basicConfig(level=logging.INFO)
+
+# ============ CONFIGURATION ============
+GRID_SECRET_KEY = os.environ.get('GRID_SECRET_KEY')
+IPFS_GATEWAY = os.environ.get('IPFS_GATEWAY', 'https://ipfs.io')
+IPFS_PROJECT_ID = os.environ.get('IPFS_PROJECT_ID')
+IPFS_PROJECT_SECRET = os.environ.get('IPFS_PROJECT_SECRET')
+ENCRYPTION_KEY = os.environ.get('GRID_ENCRYPTION_KEY', GRID_SECRET_KEY)
+
+if not GRID_SECRET_KEY:
+    raise RuntimeError("GRID_SECRET_KEY required")
+
+# ============ GLOBAL STATE ============
+PEERS: List[str] = []
+THREAT_LOG: List[Dict] = []
+BROADCAST_TIMESTAMPS: Dict[str, List[float]] = {}
+NODE_REPUTATION: Dict[str, float] = {}
+
+MAX_BROADCASTS_PER_MIN = 10
+MAX_THREAT_LOG = 1000
+MAX_PEERS = 250
+TIMESTAMP_TOLERANCE = 300
+
+# ============ SECURITY UTILS ============
+def verify_signature(node_id: str, signature: str, timestamp: float, data: Dict) -> bool:
+    if abs(time.time() - timestamp) > TIMESTAMP_TOLERANCE:
+        return False
+    message = f"{node_id}:{timestamp}:{json.dumps(data, sort_keys=True)}"
+    expected = hmac.new(GRID_SECRET_KEY.encode(), message.encode(), hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+def rate_limit_node(node_id: str) -> bool:
+    now = time.time()
+    timestamps = BROADCAST_TIMESTAMPS.get(node_id, [])
+    timestamps = [t for t in timestamps if now - t < 60]
+    if len(timestamps) >= MAX_BROADCASTS_PER_MIN:
+        return False
+    timestamps.append(now)
+    BROADCAST_TIMESTAMPS[node_id] = timestamps
+    return True
+
+def validate_threat_data(data: Dict) -> bool:
+    required = ['is_deepfake', 'confidence', 'media_url', 'media_type']
+    if not all(k in data for k in required):
+        return False
+    if not isinstance(data['is_deepfake'], bool):
+        return False
+    if not isinstance(data['confidence'], (int, float)) or not 0 <= data['confidence'] <= 1:
+        return False
+    if data['media_type'] not in ['video', 'audio']:
+        return False
+    if len(json.dumps(data)) > 10_000:
+        return False
+    return True
+
+def encrypt_data(data: Dict) -> bytes:
+    fernet = Fernet(ENCRYPTION_KEY.encode())
+    return fernet.encrypt(json.dumps(data).encode())
+
+def decrypt_data(encrypted: bytes) -> Dict:
+    fernet = Fernet(ENCRYPTION_KEY.encode())
+    return json.loads(fernet.decrypt(encrypted))
+
+# ============ CORE GRID NODE ============
+class GridNode:
+    def __init__(self, node_id: Optional[str] = None):
+        self.node_id = node_id or secrets.token_hex(16)
+        self.ipfs = connect(IPFS_GATEWAY) if IPFS_PROJECT_ID else None
+
+    def add_peer(self, peer_endpoint: str, node_id: str, signature: str, timestamp: float) -> bool:
+        if not verify_signature(node_id, signature, timestamp, {"action": "add_peer", "endpoint": peer_endpoint}):
+            logging.warning(f"Invalid peer signature from {node_id}")
+            return False
+        if peer_endpoint not in PEERS and len(PEERS) < MAX_PEERS:
+            PEERS.append(peer_endpoint)
+            NODE_REPUTATION[node_id] = 1.0
+            logging.info(f"Peer added: {node_id[:8]}@{peer_endpoint}")
+            return True
+        return False
+
+    def broadcast_threat(self, threat_data: Dict, signature: str, timestamp: float, source_node: str) -> bool:
+        if not rate_limit_node(source_node):
+            logging.warning(f"Rate limited: {source_node}")
+            return False
+        if not verify_signature(source_node, signature, timestamp, threat_data):
+            logging.warning(f"Invalid threat signature from {source_node}")
+            return False
+        if not validate_threat_data(threat_data):
+            logging.warning(f"Invalid threat data from {source_node}")
+            return False
+        
+        threat_entry = {
+            "timestamp": timestamp,
+            "source": source_node,
+            "threat": threat_data,
+            "received_at": time.time()
+        }
+        
+        THREAT_LOG.append(threat_entry)
+        if len(THREAT_LOG) > MAX_THREAT_LOG:
+            THREAT_LOG.pop(0)
+        
+        logging.info(f"THREAT RECEIVED — {threat_data['media_type'].upper()} — Confidence: {threat_data['confidence']:.1%}")
+        
+        self.relay_threat(threat_entry)
+        
+        return True
+
+    def relay_threat(self, threat_entry: Dict):
+        payload = {
+            "threat_data": threat_entry["threat"],
+            "source_node": self.node_id,
+            "timestamp": time.time()
+        }
+        signature = hmac.new(
+            GRID_SECRET_KEY.encode(),
+            json.dumps(payload, sort_keys=True).encode(),
+            hashlib.sha256
+        ).hexdigest()
+        
+        for peer in PEERS[:50]:
+            try:
+                requests.post(
+                    f"{peer}/receive_threat",
+                    json={**payload, "signature": signature},
+                    timeout=5
+                )
+            except:
+                pass
+
+    def publish_to_ipfs(self, data: Dict) -> Optional[str]:
+        if not self.ipfs:
+            return None
+        try:
+            encrypted = encrypt_data(data)
+            result = self.ipfs.add_bytes(encrypted)
+            cid = result['Hash']
+            logging.info(f"Published encrypted threat: {cid}")
+            return cid
+        except Exception as e:
+            logging.error(f"IPFS publish failed: {e}")
+            return None
