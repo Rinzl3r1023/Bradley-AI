@@ -16,7 +16,11 @@ import ipaddress
 
 logging.basicConfig(level=logging.INFO)
 
-GRID_SECRET_KEY = os.environ.get('GRID_SECRET_KEY', secrets.token_hex(32))
+GRID_SECRET_KEY = os.environ.get('GRID_SECRET_KEY')
+if not GRID_SECRET_KEY:
+    GRID_SECRET_KEY = secrets.token_hex(32)
+    logging.warning("GRID_SECRET_KEY not set - using random key (ephemeral)")
+
 IPFS_GATEWAY = os.environ.get('IPFS_GATEWAY', 'https://ipfs.io')
 IPFS_API_URL = "https://ipfs.infura.io:5001"
 IPFS_PROJECT_ID = os.environ.get('IPFS_PROJECT_ID')
@@ -94,7 +98,23 @@ def create_signature(node_id: str, timestamp: float, data: Dict) -> str:
 
 
 def validate_threat_data(data: Dict) -> bool:
-    """Strict schema validation"""
+    """Strict schema validation - v1.1 FINAL"""
+    required = ['is_deepfake', 'confidence', 'media_url', 'media_type']
+    if not all(k in data for k in required):
+        return False
+    if not isinstance(data['is_deepfake'], bool):
+        return False
+    if not isinstance(data['confidence'], (int, float)) or not 0 <= data['confidence'] <= 1:
+        return False
+    if data['media_type'] not in ['video', 'audio']:
+        return False
+    if len(json.dumps(data)) > 10_000:
+        return False
+    return True
+
+
+def validate_threat_data_minimal(data: Dict) -> bool:
+    """Minimal validation for internal broadcasts"""
     required = ['is_deepfake', 'confidence']
     if not all(k in data for k in required):
         return False
@@ -126,7 +146,7 @@ def validate_endpoint(endpoint: str) -> bool:
 
 
 def encrypt_data(data: Dict) -> bytes:
-    """Encrypt data with Fernet (optional)"""
+    """Encrypt data with Fernet - v1.1 FINAL"""
     try:
         from cryptography.fernet import Fernet
         import base64
@@ -142,7 +162,7 @@ def encrypt_data(data: Dict) -> bytes:
 
 
 def publish_to_ipfs(data: Dict) -> Optional[str]:
-    """Publish to IPFS with optional encryption - no fake CIDs"""
+    """Publish to IPFS with optional encryption - NO FAKE CIDS"""
     try:
         payload = encrypt_data(data)
         files = {'file': ('threat.json', payload)}
@@ -269,7 +289,7 @@ class GridNode:
     def broadcast_threat(self, threat_data: Dict, signature: Optional[str] = None, 
                         timestamp: Optional[float] = None, source_node: Optional[str] = None,
                         target_nodes: Optional[List[str]] = None) -> Dict:
-        """Receive and validate threat broadcast"""
+        """Receive and validate threat broadcast - v1.1 FINAL with rate limiting"""
         source = source_node or self.node_id
         ts = timestamp or time.time()
         
@@ -282,7 +302,7 @@ class GridNode:
                 logging.warning(f"Invalid threat signature from {source_node}")
                 return {"status": "invalid_signature"}
         
-        if not validate_threat_data(threat_data):
+        if not validate_threat_data_minimal(threat_data):
             logging.warning(f"Invalid threat data")
             return {"status": "invalid_data"}
         
@@ -307,7 +327,7 @@ class GridNode:
             if cid:
                 threat_entry['ipfs_cid'] = cid
                 self.ipfs_cids.append(cid)
-                print(f"⚡ THREAT RELAYED — CID: {cid}")
+                print(f"THREAT RELAYED — CID: {cid}")
         
         self.threat_log.append(threat_entry)
         self.registry.increment_threats(self.node_id)
@@ -346,7 +366,7 @@ class GridNode:
                 pass
 
     def publish_to_ipfs(self, data: Dict) -> Optional[str]:
-        """Publish encrypted to IPFS - no fake CIDs"""
+        """Publish encrypted to IPFS - NO FAKE CIDS"""
         return publish_to_ipfs(data)
 
     def get_status(self) -> Dict:
@@ -422,5 +442,5 @@ def get_registry_stats() -> Dict:
 
 
 if __name__ == "__main__":
-    test_threat = {"is_deepfake": True, "confidence": 0.94, "label": "FAKE"}
+    test_threat = {"is_deepfake": True, "confidence": 0.94, "label": "FAKE", "media_url": "test", "media_type": "video"}
     asyncio.run(relay_threat_async(test_threat))
