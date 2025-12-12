@@ -109,10 +109,11 @@ def get_deepfake_detector():
             try:
                 _encoder = pipeline(
                     "audio-classification",
-                    model="facebook/wav2vec2-base",
-                    device=0 if torch.cuda.is_available() else -1
+                    model="asapp/asvspoof2019-laasist",
+                    device=0 if torch.cuda.is_available() else -1,
+                    trust_remote_code=True
                 )
-                logging.info("Audio deepfake detector loaded")
+                logging.info("AASIST deepfake detector loaded")
             except Exception as e:
                 logging.error(f"Failed to load detector: {e}")
                 return None
@@ -132,12 +133,7 @@ def analyze_audio(audio_path: str) -> Dict[str, Any]:
     try:
         results = detector(audio_path)
         
-        spoof_score = 0.0
-        for r in results:
-            label = r.get("label", "").lower()
-            if "spoof" in label or "fake" in label or "synthetic" in label:
-                spoof_score = max(spoof_score, r["score"])
-        
+        spoof_score = max((r["score"] for r in results if r["label"] == "spoof"), default=0)
         is_fake = spoof_score > 0.7
         
         return {
