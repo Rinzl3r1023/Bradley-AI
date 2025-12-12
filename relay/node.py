@@ -9,6 +9,10 @@ import secrets
 import asyncio
 from typing import Dict, List, Optional
 from collections import defaultdict
+from threading import Lock
+import urllib.parse
+import socket
+import ipaddress
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,16 +23,59 @@ IPFS_PROJECT_ID = os.environ.get('IPFS_PROJECT_ID')
 IPFS_PROJECT_SECRET = os.environ.get('IPFS_PROJECT_SECRET')
 ENCRYPTION_KEY = os.environ.get('GRID_ENCRYPTION_KEY', GRID_SECRET_KEY)
 
-PEERS: List[str] = []
-THREAT_LOG: List[Dict] = []
-BROADCAST_TIMESTAMPS: Dict[str, List[float]] = {}
-NODE_REPUTATION: Dict[str, float] = {}
-NODE_ID = secrets.token_hex(16)
-
 MAX_BROADCASTS_PER_MIN = 10
 MAX_THREAT_LOG = 1000
 MAX_PEERS = 250
 TIMESTAMP_TOLERANCE = 300
+
+
+class ThreadSafeState:
+    def __init__(self):
+        self.peers: List[str] = []
+        self.threat_log: List[Dict] = []
+        self.broadcast_timestamps: Dict[str, List[float]] = defaultdict(list)
+        self.node_reputation: Dict[str, float] = defaultdict(lambda: 1.0)
+        self.lock = Lock()
+
+    def add_peer(self, peer: str) -> bool:
+        with self.lock:
+            if peer not in self.peers and len(self.peers) < MAX_PEERS:
+                self.peers.append(peer)
+                return True
+            return False
+
+    def get_peers(self) -> List[str]:
+        with self.lock:
+            return self.peers.copy()
+
+    def add_threat(self, entry: Dict):
+        with self.lock:
+            self.threat_log.append(entry)
+            if len(self.threat_log) > MAX_THREAT_LOG:
+                self.threat_log.pop(0)
+
+    def rate_limit(self, node_id: str) -> bool:
+        with self.lock:
+            now = time.time()
+            timestamps = self.broadcast_timestamps[node_id]
+            timestamps = [t for t in timestamps if now - t < 60]
+            if len(timestamps) >= MAX_BROADCASTS_PER_MIN:
+                return False
+            timestamps.append(now)
+            self.broadcast_timestamps[node_id] = timestamps
+            return True
+
+    def update_reputation(self, node_id: str, delta: float):
+        with self.lock:
+            self.node_reputation[node_id] = max(0, min(1, self.node_reputation[node_id] + delta))
+
+    def get_reputation(self, node_id: str) -> float:
+        with self.lock:
+            return self.node_reputation[node_id]
+
+
+state = ThreadSafeState()
+NODE_ID = secrets.token_hex(16)
 
 
 def verify_signature(node_id: str, signature: str, timestamp: float, data: Dict) -> bool:
@@ -46,18 +93,6 @@ def create_signature(node_id: str, timestamp: float, data: Dict) -> str:
     return hmac.new(GRID_SECRET_KEY.encode(), message.encode(), hashlib.sha256).hexdigest()
 
 
-def rate_limit_node(node_id: str) -> bool:
-    """Rate limit per node ID"""
-    now = time.time()
-    timestamps = BROADCAST_TIMESTAMPS.get(node_id, [])
-    timestamps = [t for t in timestamps if now - t < 60]
-    if len(timestamps) >= MAX_BROADCASTS_PER_MIN:
-        return False
-    timestamps.append(now)
-    BROADCAST_TIMESTAMPS[node_id] = timestamps
-    return True
-
-
 def validate_threat_data(data: Dict) -> bool:
     """Strict schema validation"""
     required = ['is_deepfake', 'confidence']
@@ -72,12 +107,30 @@ def validate_threat_data(data: Dict) -> bool:
     return True
 
 
+def validate_endpoint(endpoint: str) -> bool:
+    """Validate peer endpoint - must be HTTPS and not private/loopback"""
+    try:
+        parsed = urllib.parse.urlparse(endpoint)
+        if parsed.scheme != 'https':
+            return False
+        if not parsed.hostname:
+            return False
+        for addr_info in socket.getaddrinfo(parsed.hostname, None):
+            ip = addr_info[4][0]
+            addr = ipaddress.ip_address(ip)
+            if addr.is_private or addr.is_loopback:
+                return False
+        return True
+    except Exception:
+        return False
+
+
 def encrypt_data(data: Dict) -> bytes:
     """Encrypt data with Fernet (optional)"""
     try:
         from cryptography.fernet import Fernet
-        key = ENCRYPTION_KEY[:32].ljust(32, '0')
         import base64
+        key = ENCRYPTION_KEY[:32].ljust(32, '0')
         fernet_key = base64.urlsafe_b64encode(key.encode())
         fernet = Fernet(fernet_key)
         return fernet.encrypt(json.dumps(data).encode())
@@ -88,24 +141,8 @@ def encrypt_data(data: Dict) -> bytes:
         return json.dumps(data).encode()
 
 
-def decrypt_data(encrypted: bytes) -> Dict:
-    """Decrypt data with Fernet (optional)"""
-    try:
-        from cryptography.fernet import Fernet
-        key = ENCRYPTION_KEY[:32].ljust(32, '0')
-        import base64
-        fernet_key = base64.urlsafe_b64encode(key.encode())
-        fernet = Fernet(fernet_key)
-        return json.loads(fernet.decrypt(encrypted))
-    except ImportError:
-        return json.loads(encrypted)
-    except Exception as e:
-        logging.warning(f"Decryption failed: {e}")
-        return json.loads(encrypted)
-
-
 def publish_to_ipfs(data: Dict) -> Optional[str]:
-    """Publish to IPFS with optional encryption"""
+    """Publish to IPFS with optional encryption - no fake CIDs"""
     try:
         payload = encrypt_data(data)
         files = {'file': ('threat.json', payload)}
@@ -128,65 +165,70 @@ def publish_to_ipfs(data: Dict) -> Optional[str]:
     except requests.exceptions.RequestException as e:
         logging.warning(f"IPFS publish failed: {e}")
     
-    cid = f"Qm{secrets.token_hex(22)}"
-    logging.info(f"Using simulated CID (gateway mode): {cid}")
-    return cid
+    return None
 
 
 class NodeRegistry:
     def __init__(self):
         self.nodes: Dict[str, Dict] = {}
         self.max_nodes = MAX_PEERS
+        self.lock = Lock()
     
     def register(self, node_id: str, endpoint: Optional[str] = None) -> bool:
-        if len(self.nodes) >= self.max_nodes:
-            return False
-        
-        self.nodes[node_id] = {
-            'endpoint': endpoint or '',
-            'registered_at': time.time(),
-            'last_seen': time.time(),
-            'threats_relayed': 0,
-            'is_active': True,
-            'reputation': 1.0
-        }
-        NODE_REPUTATION[node_id] = 1.0
-        return True
+        with self.lock:
+            if len(self.nodes) >= self.max_nodes:
+                return False
+            
+            self.nodes[node_id] = {
+                'endpoint': endpoint or '',
+                'registered_at': time.time(),
+                'last_seen': time.time(),
+                'threats_relayed': 0,
+                'is_active': True,
+                'reputation': 1.0
+            }
+            return True
     
     def update_heartbeat(self, node_id: str) -> None:
-        if node_id in self.nodes:
-            self.nodes[node_id]['last_seen'] = time.time()
+        with self.lock:
+            if node_id in self.nodes:
+                self.nodes[node_id]['last_seen'] = time.time()
     
     def get_active_nodes(self, timeout: int = 300) -> List[str]:
-        current_time = time.time()
-        active = []
-        for node_id, info in self.nodes.items():
-            if info['is_active'] and (current_time - info['last_seen']) < timeout:
-                active.append(node_id)
-        return active
+        with self.lock:
+            current_time = time.time()
+            active = []
+            for node_id, info in self.nodes.items():
+                if info['is_active'] and (current_time - info['last_seen']) < timeout:
+                    active.append(node_id)
+            return active
     
     def increment_threats(self, node_id: str) -> None:
-        if node_id in self.nodes:
-            self.nodes[node_id]['threats_relayed'] += 1
+        with self.lock:
+            if node_id in self.nodes:
+                self.nodes[node_id]['threats_relayed'] += 1
     
     def update_reputation(self, node_id: str, delta: float) -> None:
-        if node_id in self.nodes:
-            self.nodes[node_id]['reputation'] = max(0, min(1, self.nodes[node_id]['reputation'] + delta))
-            NODE_REPUTATION[node_id] = self.nodes[node_id]['reputation']
+        with self.lock:
+            if node_id in self.nodes:
+                self.nodes[node_id]['reputation'] = max(0, min(1, self.nodes[node_id]['reputation'] + delta))
     
     def deactivate(self, node_id: str) -> None:
-        if node_id in self.nodes:
-            self.nodes[node_id]['is_active'] = False
+        with self.lock:
+            if node_id in self.nodes:
+                self.nodes[node_id]['is_active'] = False
     
     def get_stats(self) -> Dict:
-        active = self.get_active_nodes()
-        total_threats = sum(n['threats_relayed'] for n in self.nodes.values())
-        return {
-            'total_registered': len(self.nodes),
-            'active_nodes': len(active),
-            'max_capacity': self.max_nodes,
-            'total_threats_relayed': total_threats
-        }
+        with self.lock:
+            active = [n for n, info in self.nodes.items() 
+                     if info['is_active'] and (time.time() - info['last_seen']) < 300]
+            total_threats = sum(n['threats_relayed'] for n in self.nodes.values())
+            return {
+                'total_registered': len(self.nodes),
+                'active_nodes': len(active),
+                'max_capacity': self.max_nodes,
+                'total_threats_relayed': total_threats
+            }
 
 
 class GridNode:
@@ -205,8 +247,11 @@ class GridNode:
 
     def add_peer(self, peer_endpoint: str, node_id: Optional[str] = None, 
                  signature: Optional[str] = None, timestamp: Optional[float] = None) -> bool:
-        """Add peer with optional authentication"""
+        """Add peer with optional authentication and endpoint validation"""
         if signature and timestamp and node_id:
+            if not validate_endpoint(peer_endpoint):
+                logging.warning(f"Invalid endpoint: {peer_endpoint}")
+                return False
             if not verify_signature(node_id, signature, timestamp, 
                                    {"action": "add_peer", "endpoint": peer_endpoint}):
                 logging.warning(f"Invalid peer signature from {node_id}")
@@ -214,11 +259,9 @@ class GridNode:
         
         peer_id = node_id or hashlib.sha256(peer_endpoint.encode()).hexdigest()[:16]
         
-        if peer_endpoint not in PEERS and len(PEERS) < MAX_PEERS:
-            PEERS.append(peer_endpoint)
+        if state.add_peer(peer_endpoint):
             self.connected_peers.append(peer_id)
             self.registry.register(peer_id, peer_endpoint)
-            NODE_REPUTATION[peer_id] = 1.0
             logging.info(f"Peer added: {peer_id[:8]}@{peer_endpoint}")
             return True
         return False
@@ -231,7 +274,7 @@ class GridNode:
         ts = timestamp or time.time()
         
         if source_node and signature:
-            if not rate_limit_node(source_node):
+            if not state.rate_limit(source_node):
                 logging.warning(f"Rate limited: {source_node}")
                 return {"status": "rate_limited"}
             
@@ -257,9 +300,7 @@ class GridNode:
             'ipfs_cid': None
         }
         
-        THREAT_LOG.append(threat_entry)
-        if len(THREAT_LOG) > MAX_THREAT_LOG:
-            THREAT_LOG.pop(0)
+        state.add_threat(threat_entry)
         
         if threat_data.get('is_deepfake', False):
             cid = publish_to_ipfs(threat_entry)
@@ -293,7 +334,8 @@ class GridNode:
             hashlib.sha256
         ).hexdigest()
         
-        for peer in PEERS[:50]:
+        peers = state.get_peers()
+        for peer in peers[:50]:
             try:
                 requests.post(
                     f"{peer}/receive_threat",
@@ -304,7 +346,7 @@ class GridNode:
                 pass
 
     def publish_to_ipfs(self, data: Dict) -> Optional[str]:
-        """Publish encrypted to IPFS"""
+        """Publish encrypted to IPFS - no fake CIDs"""
         return publish_to_ipfs(data)
 
     def get_status(self) -> Dict:
@@ -346,8 +388,8 @@ async def relay_threat_async(threat_data: Dict) -> Dict:
         result["ipfs_url"] = f"{IPFS_GATEWAY}/ipfs/{cid}"
         logging.info(f"Threat relayed to IPFS: {cid}")
     
-    for peer in PEERS:
-        result["peers_notified"] += 1
+    peers = state.get_peers()
+    result["peers_notified"] = len(peers)
     
     return result
 
@@ -366,7 +408,7 @@ def relay_threat(threat_data: Dict, target_nodes: Optional[List[str]] = None) ->
 
 
 def add_peer(peer_addr: str) -> None:
-    if peer_addr not in PEERS:
+    if peer_addr not in state.get_peers():
         grid_node.add_peer(peer_addr)
 
 
