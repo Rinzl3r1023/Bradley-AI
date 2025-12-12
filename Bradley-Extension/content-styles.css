@@ -1,11 +1,8 @@
-/* Bradley AI Extension v1.1 — Secure & Accessible Styles */
-
-/* Scan Indicators */
 .bradley-indicator {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0, 0, 0, 0.85);
   color: white;
   padding: 8px 12px;
   border-radius: 6px;
@@ -18,57 +15,78 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.bradley-scanning { background: rgba(59,130,246,0.9); }
-.bradley-safe { background: rgba(34,197,94,0.9); }
-.bradley-threat { background: rgba(239,68,68,0.95); pointer-events: auto; }
-.bradley-error { background: rgba(245,158,11,0.9); }
-.bradley-icon { font-size: 14px; }
+.bradley-scanning {
+  background: rgba(59, 130, 246, 0.9);
+}
+
+.bradley-safe {
+  background: rgba(34, 197, 94, 0.9);
+}
+
+.bradley-threat {
+  background: rgba(239, 68, 68, 0.95);
+  pointer-events: auto;
+}
+
+.bradley-error {
+  background: rgba(245, 158, 11, 0.9);
+}
+
+.bradley-icon {
+  font-size: 14px;
+}
 
 @keyframes bradley-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-.bradley-scanning .bradley-icon { animation: bradley-spin 1s linear infinite; }
 
-/* Threat Warning Overlay */
-.bradley-threat-overlay {
+.bradley-scanning .bradley-icon {
+  animation: bradley-spin 1s linear infinite;
+}
+
+.bradley-threat-overlay,
+.bradley-consent-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  z-index: 2147483647;
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2147483647;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.bradley-warning-box {
+.bradley-warning-box,
+.bradley-consent-box {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 2px solid #ef4444;
-  border-radius: 12px;
+  border: 2px solid #00d4ff;
+  border-radius: 16px;
   max-width: 420px;
   width: 90%;
-  box-shadow: 0 0 40px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 40px rgba(0, 212, 255, 0.3);
   overflow: hidden;
 }
 
-.bradley-warning-header {
+.bradley-warning-header,
+.bradley-consent-header {
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.2), transparent);
+  padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  background: rgba(239, 68, 68, 0.1);
-  border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.3);
 }
 
 .bradley-logo {
   color: #00d4ff;
   font-weight: 700;
   font-size: 14px;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
 }
 
 .bradley-close {
@@ -81,39 +99,65 @@
   line-height: 1;
   transition: color 0.2s;
 }
-.bradley-close:hover { color: #fff; }
 
-.bradley-warning-content {
-  padding: 24px;
-  text-align: center;
+.bradley-close:hover {
   color: #fff;
 }
 
-.bradley-warning-content h2 {
-  color: #ef4444;
-  font-size: 22px;
-  margin: 0 0 16px;
-  font-weight: 700;
+.bradley-warning-content,
+.bradley-consent-content {
+  padding: 24px;
+  color: #e0e0e0;
+}
+
+.bradley-warning-content h2,
+.bradley-consent-content h2 {
+  color: #ff4444;
+  margin: 0 0 16px 0;
+  font-size: 20px;
+  text-align: center;
+}
+
+.bradley-consent-content h2 {
+  color: #00d4ff;
 }
 
 .bradley-confidence {
+  text-align: center;
   font-size: 28px;
   font-weight: 700;
-  color: #ef4444;
-  margin: 0 0 12px;
+  color: #ff6b6b;
+  margin: 0 0 16px 0;
 }
 
 .bradley-message {
-  color: #9ca3af;
-  font-size: 14px;
-  margin: 0 0 24px;
+  text-align: center;
+  color: #aaa;
+  margin: 0 0 24px 0;
   line-height: 1.5;
 }
 
-.bradley-actions {
+.bradley-consent-content p {
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.bradley-consent-content ul {
+  margin: 0 0 16px 20px;
+  padding: 0;
+  color: #aaa;
+}
+
+.bradley-consent-content li {
+  margin-bottom: 6px;
+}
+
+.bradley-actions,
+.bradley-consent-actions {
   display: flex;
   gap: 12px;
   justify-content: center;
+  margin-top: 20px;
 }
 
 .bradley-btn {
@@ -122,96 +166,32 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  border: none;
   transition: all 0.2s;
+  border: none;
 }
 
 .bradley-btn-primary {
   background: linear-gradient(135deg, #00d4ff, #0099cc);
   color: #000;
 }
+
 .bradley-btn-primary:hover {
+  background: linear-gradient(135deg, #00e5ff, #00b3e6);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
 }
 
 .bradley-btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-.bradley-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Consent Dialog */
-.bradley-consent-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.9);
-  z-index: 2147483647;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-.bradley-consent-box {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 2px solid #00d4ff;
-  border-radius: 12px;
-  max-width: 480px;
-  width: 90%;
-  box-shadow: 0 0 40px rgba(0, 212, 255, 0.3);
-  overflow: hidden;
-}
-
-.bradley-consent-header {
-  padding: 16px 20px;
-  background: rgba(0, 212, 255, 0.1);
-  border-bottom: 1px solid rgba(0, 212, 255, 0.3);
-}
-
-.bradley-consent-content {
-  padding: 24px;
-  color: #fff;
-}
-
-.bradley-consent-content h2 {
+  background: transparent;
   color: #00d4ff;
-  font-size: 20px;
-  margin: 0 0 16px;
-  font-weight: 700;
+  border: 1px solid #00d4ff;
 }
 
-.bradley-consent-content p {
-  color: #d1d5db;
-  font-size: 14px;
-  line-height: 1.6;
-  margin: 0 0 12px;
+.bradley-btn-secondary:hover {
+  background: rgba(0, 212, 255, 0.1);
 }
 
-.bradley-consent-content ul {
-  margin: 0 0 16px;
-  padding-left: 20px;
-  color: #9ca3af;
-  font-size: 13px;
-}
-
-.bradley-consent-content li {
-  margin-bottom: 6px;
-}
-
-.bradley-consent-content strong {
-  color: #fff;
-}
-
-.bradley-consent-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin-top: 24px;
+.bradley-btn:focus {
+  outline: 2px solid #00d4ff;
+  outline-offset: 2px;
 }
