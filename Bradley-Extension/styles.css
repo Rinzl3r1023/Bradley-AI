@@ -62,10 +62,38 @@ h1 {
   text-transform: uppercase;
 }
 
+.error-message {
+  background: rgba(255, 0, 0, 0.2);
+  border: 1px solid #ff0000;
+  color: #ff6666;
+  padding: 10px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+  font-size: 11px;
+  text-align: center;
+}
+
 .status-section {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 20px;
+}
+
+.server-status {
+  font-size: 10px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.server-online {
+  color: #00ff00;
+}
+
+.server-offline {
+  color: #ff6666;
 }
 
 .status-indicator {
@@ -174,6 +202,13 @@ h1 {
   white-space: nowrap;
 }
 
+.threat-confidence {
+  display: block;
+  color: #ff6666;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
 .controls {
   display: flex;
   flex-direction: column;
@@ -240,8 +275,33 @@ button {
   color: #333;
 }
 
-.threat-log {
+.threat-log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   margin-top: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.btn-clear {
+  background: transparent;
+  color: #666;
+  border: 1px solid #333;
+  padding: 4px 8px;
+  font-size: 9px;
+}
+
+.btn-clear:hover {
+  color: #ff6666;
+  border-color: #ff6666;
+}
+
+.threat-log {
   max-height: 200px;
   overflow-y: auto;
   text-align: left;

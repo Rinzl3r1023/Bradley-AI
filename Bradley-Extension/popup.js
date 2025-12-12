@@ -1,145 +1,295 @@
 const API_BASE = 'https://bradleyai.replit.app';
+const MAX_LOG_ENTRIES = 10;
 
-document.addEventListener('DOMContentLoaded', () => {
-  loadStatus();
-  setupEventListeners();
-  loadThreatLog();
+function sanitizeText(str) {
+  if (typeof str !== 'string') return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function sanitizeUrlForDisplay(url) {
+  if (!url || typeof url !== 'string') return 'Unknown';
+  try {
+    const parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return 'Unknown';
+    }
+    return parsed.hostname;
+  } catch {
+    return 'Unknown';
+  }
+}
+
+function getElement(id) {
+  const el = document.getElementById(id);
+  if (!el) {
+    console.warn(`[BRADLEY POPUP] Element not found: ${id}`);
+  }
+  return el;
+}
+
+function safeSetText(id, text) {
+  const el = getElement(id);
+  if (el) {
+    el.textContent = String(text);
+  }
+}
+
+function safeSetClass(id, className) {
+  const el = getElement(id);
+  if (el) {
+    el.className = className;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await loadStatus();
+    setupEventListeners();
+    await loadThreatHistory();
+  } catch (error) {
+    console.error('[BRADLEY POPUP] Initialization error:', error);
+    showError('Failed to initialize popup');
+  }
+});
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== 'sync') return;
+  
+  if (changes.enabled || changes.threats || changes.totalScans || changes.lastThreat) {
+    loadStatus().catch(err => {
+      console.error('[BRADLEY POPUP] Failed to reload status:', err);
+    });
+  }
 });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.type === "THREAT") {
-    const countEl = document.getElementById('threats-count');
-    const count = parseInt(countEl.textContent) + 1;
-    countEl.textContent = count;
-    
-    chrome.action.setBadgeText({text: count.toString()});
-    chrome.action.setBadgeBackgroundColor({color: '#ff0000'});
-    
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: 'icons/icon128.png',
-      title: 'Bradley AI — THREAT DETECTED',
-      message: `Deepfake confidence: ${(msg.data.confidence*100).toFixed(1)}% on ${msg.url}`
-    });
-    
-    addThreatEntry(msg.data, msg.url);
-    
-    chrome.storage.sync.get(['threats'], (data) => {
-      chrome.storage.sync.set({ threats: (data.threats || 0) + 1 });
-    });
+  if (!msg || typeof msg.type !== 'string') {
+    return;
   }
   
-  if (msg.type === "SCAN_COMPLETE") {
-    const scansEl = document.getElementById('scans-count');
-    scansEl.textContent = parseInt(scansEl.textContent) + 1;
-    
-    chrome.storage.sync.get(['totalScans'], (data) => {
-      chrome.storage.sync.set({ totalScans: (data.totalScans || 0) + 1 });
+  if (msg.type === 'SHOW_WARNING' || msg.type === 'STATUS_UPDATE') {
+    loadStatus().catch(err => {
+      console.error('[BRADLEY POPUP] Failed to update status:', err);
     });
   }
 });
 
-function addThreatEntry(data, url) {
-  const log = document.getElementById('threat-log');
-  const entry = document.createElement('div');
-  entry.className = 'threat-entry';
-  
-  let hostname = 'Unknown';
+async function loadStatus() {
   try {
-    hostname = new URL(url).hostname;
-  } catch {}
+    const data = await chrome.storage.sync.get(['enabled', 'threats', 'totalScans', 'lastThreat']);
+    updateUI(data);
+  } catch (error) {
+    console.error('[BRADLEY POPUP] Storage error:', error);
+    showError('Failed to load status');
+  }
   
-  entry.innerHTML = `
-    <strong>THREAT:</strong> ${data.label || 'FAKE'} (${(data.confidence*100).toFixed(1)}%)
-    <br><small>${hostname} - ${new Date().toLocaleTimeString()}</small>
-  `;
-  log.prepend(entry);
-  
-  while (log.children.length > 10) {
-    log.removeChild(log.lastChild);
+  try {
+    const response = await fetch(`${API_BASE}/api/status`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(5000)
+    });
+    
+    if (response.ok) {
+      const serverStatus = await response.json();
+      updateServerStatus(true, serverStatus);
+    } else {
+      updateServerStatus(false);
+    }
+  } catch (error) {
+    console.warn('[BRADLEY POPUP] Server offline:', error.message);
+    updateServerStatus(false);
   }
 }
 
-function loadThreatLog() {
-  chrome.storage.sync.get(['threatLog'], (data) => {
-    const log = data.threatLog || [];
-    log.forEach(item => {
-      addThreatEntry(item.data, item.url);
-    });
-  });
-}
-
-function loadStatus() {
-  chrome.storage.sync.get(['enabled', 'threats', 'totalScans', 'lastThreat'], (data) => {
-    updateUI(data);
-  });
-  
-  fetch(`${API_BASE}/api/status`)
-    .then(r => r.json())
-    .then(serverStatus => {
-      console.log('[BRADLEY] Server status:', serverStatus);
-    })
-    .catch(err => {
-      console.log('[BRADLEY] Server offline:', err.message);
-    });
+function updateServerStatus(online, data = null) {
+  const serverIndicator = getElement('server-status');
+  if (serverIndicator) {
+    serverIndicator.textContent = online ? 'Grid: Online' : 'Grid: Offline';
+    serverIndicator.className = online ? 'server-online' : 'server-offline';
+  }
 }
 
 function updateUI(data) {
   const isEnabled = data.enabled !== false;
   
-  const statusDot = document.getElementById('status-dot');
-  const statusText = document.getElementById('status-text');
-  const toggleText = document.getElementById('toggle-text');
+  const statusDot = getElement('status-dot');
+  const statusText = getElement('status-text');
+  const toggleText = getElement('toggle-text');
   
-  statusDot.className = 'status-dot ' + (isEnabled ? 'online' : 'offline');
-  statusText.textContent = isEnabled ? 'ONLINE' : 'OFFLINE';
-  statusText.className = isEnabled ? 'online' : 'offline';
-  toggleText.textContent = isEnabled ? 'DISABLE PROTECTION' : 'ENABLE PROTECTION';
-  
-  document.getElementById('threats-count').textContent = data.threats || 0;
-  document.getElementById('scans-count').textContent = data.totalScans || 0;
-  
-  if (data.threats > 0) {
-    chrome.action.setBadgeText({text: data.threats.toString()});
-    chrome.action.setBadgeBackgroundColor({color: '#ff0000'});
+  if (statusDot) {
+    statusDot.className = 'status-dot ' + (isEnabled ? 'online' : 'offline');
   }
   
-  if (data.lastThreat) {
-    const threatSection = document.getElementById('last-threat');
-    const threatUrl = document.getElementById('threat-url');
-    threatSection.style.display = 'block';
+  if (statusText) {
+    statusText.textContent = isEnabled ? 'ONLINE' : 'OFFLINE';
+    statusText.className = isEnabled ? 'online' : 'offline';
+  }
+  
+  if (toggleText) {
+    toggleText.textContent = isEnabled ? 'DISABLE PROTECTION' : 'ENABLE PROTECTION';
+  }
+  
+  const threatCount = Number(data.threats) || 0;
+  const scanCount = Number(data.totalScans) || 0;
+  
+  safeSetText('threats-count', threatCount);
+  safeSetText('scans-count', scanCount);
+  
+  if (data.lastThreat && typeof data.lastThreat === 'object') {
+    displayLastThreat(data.lastThreat);
+  }
+}
+
+function displayLastThreat(threat) {
+  const threatSection = getElement('last-threat');
+  const threatUrl = getElement('threat-url');
+  
+  if (!threatSection || !threatUrl) return;
+  
+  threatSection.style.display = 'block';
+  
+  const hostname = sanitizeUrlForDisplay(threat.url);
+  threatUrl.textContent = hostname;
+  
+  if (threat.url && typeof threat.url === 'string') {
+    threatUrl.title = sanitizeText(threat.url);
+  }
+  
+  const confidenceEl = getElement('threat-confidence');
+  if (confidenceEl && typeof threat.confidence === 'number') {
+    const confidence = Math.round(Math.min(100, Math.max(0, threat.confidence * 100)));
+    confidenceEl.textContent = `${confidence}%`;
+  }
+}
+
+async function loadThreatHistory() {
+  try {
+    const response = await new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'GET_HISTORY' }, resolve);
+    });
     
-    try {
-      const url = new URL(data.lastThreat.url);
-      threatUrl.textContent = url.hostname;
-      threatUrl.title = data.lastThreat.url;
-    } catch {
-      threatUrl.textContent = 'Unknown';
+    if (response && response.success && Array.isArray(response.history)) {
+      const log = getElement('threat-log');
+      if (!log) return;
+      
+      log.innerHTML = '';
+      
+      const recentThreats = response.history.slice(-MAX_LOG_ENTRIES).reverse();
+      
+      recentThreats.forEach(threat => {
+        if (threat && typeof threat === 'object') {
+          addThreatEntry(threat);
+        }
+      });
     }
+  } catch (error) {
+    console.error('[BRADLEY POPUP] Failed to load threat history:', error);
+  }
+}
+
+function addThreatEntry(threat) {
+  const log = getElement('threat-log');
+  if (!log) return;
+  
+  const entry = document.createElement('div');
+  entry.className = 'threat-entry';
+  
+  const hostname = sanitizeUrlForDisplay(threat.url);
+  const label = sanitizeText(threat.type || 'DEEPFAKE');
+  const confidence = typeof threat.confidence === 'number' 
+    ? Math.round(Math.min(100, Math.max(0, threat.confidence * 100))) 
+    : 0;
+  
+  const timestamp = threat.timestamp 
+    ? new Date(threat.timestamp).toLocaleTimeString() 
+    : new Date().toLocaleTimeString();
+  
+  const strong = document.createElement('strong');
+  strong.textContent = 'THREAT: ';
+  
+  const labelSpan = document.createElement('span');
+  labelSpan.textContent = `${label} (${confidence}%)`;
+  
+  const br = document.createElement('br');
+  
+  const small = document.createElement('small');
+  small.textContent = `${hostname} - ${timestamp}`;
+  
+  entry.appendChild(strong);
+  entry.appendChild(labelSpan);
+  entry.appendChild(br);
+  entry.appendChild(small);
+  
+  log.prepend(entry);
+  
+  while (log.children.length > MAX_LOG_ENTRIES) {
+    log.removeChild(log.lastChild);
   }
 }
 
 function setupEventListeners() {
-  document.getElementById('toggle-btn').addEventListener('click', () => {
-    chrome.storage.sync.get(['enabled'], (data) => {
-      const newState = data.enabled === false ? true : false;
-      chrome.storage.sync.set({ enabled: newState }, () => {
-        loadStatus();
-        
-        if (newState) {
-          chrome.action.setBadgeText({text: ''});
-        }
-      });
-    });
-  });
+  const toggleBtn = getElement('toggle-btn');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', handleToggle);
+  }
   
-  document.getElementById('dashboard-btn').addEventListener('click', () => {
-    chrome.tabs.create({ url: API_BASE });
-  });
+  const dashboardBtn = getElement('dashboard-btn');
+  if (dashboardBtn) {
+    dashboardBtn.addEventListener('click', () => {
+      chrome.tabs.create({ url: API_BASE });
+    });
+  }
+  
+  const clearBtn = getElement('clear-log-btn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', handleClearLog);
+  }
 }
 
-chrome.storage.onChanged.addListener((changes) => {
-  if (changes.enabled || changes.threats || changes.totalScans) {
-    chrome.storage.sync.get(['enabled', 'threats', 'totalScans', 'lastThreat'], updateUI);
+async function handleToggle() {
+  try {
+    const data = await chrome.storage.sync.get(['enabled']);
+    const newState = data.enabled === false;
+    
+    const response = await new Promise((resolve) => {
+      chrome.runtime.sendMessage({
+        type: 'SET_ENABLED',
+        enabled: newState
+      }, resolve);
+    });
+    
+    if (response && response.success) {
+      await loadStatus();
+    } else {
+      throw new Error(response?.error || 'Toggle failed');
+    }
+  } catch (error) {
+    console.error('[BRADLEY POPUP] Toggle error:', error);
+    showError('Failed to toggle protection');
   }
-});
+}
+
+async function handleClearLog() {
+  try {
+    const log = getElement('threat-log');
+    if (log) {
+      log.innerHTML = '';
+    }
+  } catch (error) {
+    console.error('[BRADLEY POPUP] Clear log error:', error);
+  }
+}
+
+function showError(message) {
+  const errorEl = getElement('error-message');
+  if (errorEl) {
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+    setTimeout(() => {
+      errorEl.style.display = 'none';
+    }, 3000);
+  }
+}

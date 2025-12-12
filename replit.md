@@ -80,7 +80,8 @@ The Flask server runs on port 5000 via the "Bradley AI" workflow.
 - [ ] Chrome Web Store publication
 
 ## Recent Changes
-- **Dec 12, 2025:** Extension v1.3.0 - background.js hardened (A- 90/100): input validation, sender validation, rate limiting, async error handling, storage quota management
+- **Dec 12, 2025:** Extension v1.3.0 - popup.js hardened (A- 90/100): single-source-of-truth architecture, delegates to background.js, XSS-proof DOM API
+- **Dec 12, 2025:** Extension v1.3.0 - background.js hardened (A- 90/100): AsyncMutex atomic storage, input validation, sender validation, rate limiting
 - **Dec 12, 2025:** Extension api.js v1.2 (A- 90/100) - URL validation, timeouts, retry logic, input/response validation
 - **Dec 12, 2025:** Extension v1.2.0 - content.js 100% XSS-proof, DOM API only, enhanced CSP
 - **Dec 12, 2025:** Grid Node v1.1 FINAL (A- 92/100 Security) - HMAC signatures, rate limiting, encryption, no fake CIDs

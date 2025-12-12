@@ -257,6 +257,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .then(data => sendResponse({ success: true, history: data.threatHistory || [] }))
       .catch(err => sendResponse({ success: false, error: err.message }));
     return true;
+    
+  } else if (message.type === 'SET_ENABLED') {
+    if (typeof message.enabled !== 'boolean') {
+      sendResponse({ success: false, error: 'Invalid enabled value' });
+      return;
+    }
+    
+    chrome.storage.sync.set({ enabled: message.enabled })
+      .then(() => updateBadgeForAllTabs(message.enabled))
+      .then(() => sendResponse({ success: true }))
+      .catch(err => sendResponse({ success: false, error: err.message }));
+    return true;
   }
   
   sendResponse({ success: false, error: 'Unknown message type' });

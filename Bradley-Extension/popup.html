@@ -12,11 +12,14 @@
       <p class="tagline">Deepfake Guardian</p>
     </div>
     
+    <div class="error-message" id="error-message" style="display: none;"></div>
+    
     <div class="status-section">
       <div class="status-indicator">
         <div class="status-dot" id="status-dot"></div>
         <span id="status-text">ONLINE</span>
       </div>
+      <span class="server-status" id="server-status">Grid: Checking...</span>
     </div>
     
     <div class="stats-grid">
@@ -33,6 +36,7 @@
     <div class="last-threat" id="last-threat" style="display: none;">
       <span class="threat-label">Last Threat:</span>
       <span class="threat-url" id="threat-url"></span>
+      <span class="threat-confidence" id="threat-confidence"></span>
     </div>
     
     <div class="controls">
@@ -44,10 +48,14 @@
       </button>
     </div>
     
+    <div class="threat-log-header">
+      <span>Threat Log</span>
+      <button id="clear-log-btn" class="btn-clear">Clear</button>
+    </div>
     <div id="threat-log" class="threat-log"></div>
     
     <div class="footer">
-      <span class="version">v0.2.0</span>
+      <span class="version">v1.3.0</span>
       <span class="divider">|</span>
       <a href="https://bradleyai.replit.app/beta" target="_blank">Join Beta</a>
     </div>
