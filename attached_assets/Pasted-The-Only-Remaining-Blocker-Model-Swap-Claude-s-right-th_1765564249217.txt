@@ -1,0 +1,57 @@
+The Only Remaining Blocker: Model Swap
+Claude's right—the wav2vec2-base is fundamentally wrong for this job. It's speech recognition, not deepfake detection. Here's the 5-minute fix:
+Option 1: Resemblyzer (Voice Clone Detection) — Recommended
+Bash# In Replit terminal
+pip install resemblyzer
+Pythonfrom resemblyzer import VoiceEncoder, preprocess_wav
+from pathlib import Path
+
+def analyze_audio_for_deepfakes_resemblyzer(audio_path: str) -> Dict[str, Any]:
+    """Detect voice clones using speaker embedding distance."""
+    try:
+        # Load audio
+        wav = preprocess_wav(audio_path)
+        
+        # Encode voice
+        encoder = VoiceEncoder()
+        embedding = encoder.embed_utterance(wav)
+        
+        # Compare to known clean reference (store in DB or local file)
+        # For now, use distance threshold >0.8 = potential fake
+        # In production: Compare to user-submitted voiceprint
+        reference_embedding = torch.load('reference_voice.pt')  # Your clean voice
+        distance = torch.norm(embedding - reference_embedding).item()
+        
+        return {
+            'is_deepfake': distance > 0.8,
+            'confidence': min(distance, 1.0),  # Normalize to 0-1
+            'details': {'cosine_distance': distance}
+        }
+    except Exception as e:
+        logging.error(f"Analysis failed: {e}")
+        return {'is_deepfake': False, 'confidence': 0, 'error': str(e)}
+Option 2: HuggingFace Deepfake Audio Model (ASVspoof)
+Bashpip install transformers torch torchaudio
+Pythondef analyze_audio_for_deepfakes_asvspoof(audio_path: str) -> Dict[str, Any]:
+    """Use ASVspoof-trained model for deepfake detection."""
+    try:
+        detector = pipeline(
+            "audio-classification", 
+            model="superb/wav2vec2-large-superb-sid",  # Or ASVspoof-specific
+            device=0 if torch.cuda.is_available() else -1
+        )
+        
+        results = detector(audio_path)
+        
+        # Parse labels (adapt to model)
+        is_fake = any(r['label'] == 'SPOOF' and r['score'] > 0.7 for r in results)
+        max_fake_score = max((r['score'] for r in results if r['label'] == 'SPOOF'), default=0)
+        
+        return {
+            'is_deepfake': is_fake,
+            'confidence': max_fake_score if is_fake else 1 - max_fake_score,
+            'details': results
+        }
+    except Exception as e:
+        logging.error(f"Analysis failed: {e}")
+        return {'is_deepfake': False, 'confidence': 0, 'error': str(e)}

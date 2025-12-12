@@ -1,4 +1,3 @@
-from transformers import pipeline
 import requests
 import urllib.parse
 import socket
@@ -6,7 +5,8 @@ import ipaddress
 import logging
 import os
 import tempfile
-from typing import Dict, Any
+import numpy as np
+from typing import Dict, Any, Optional
 import torch
 
 logging.basicConfig(level=logging.INFO)
@@ -15,6 +15,21 @@ ALLOWED_DOMAINS = ['huggingface.co', 'cdn.huggingface.co', 'example.com']
 ALLOWED_SCHEMES = ['https', 'http']
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_REDIRECTS = 5
+
+VOICE_ENCODER = None
+REFERENCE_EMBEDDINGS = {}
+
+
+def get_voice_encoder():
+    global VOICE_ENCODER
+    if VOICE_ENCODER is None:
+        try:
+            from resemblyzer import VoiceEncoder
+            VOICE_ENCODER = VoiceEncoder()
+            logging.info("Resemblyzer VoiceEncoder loaded")
+        except Exception as e:
+            logging.error(f"Failed to load VoiceEncoder: {e}")
+    return VOICE_ENCODER
 
 
 def is_allowed_domain(hostname: str) -> bool:
@@ -117,6 +132,55 @@ def download_and_save_audio(url: str) -> str:
         raise
 
 
+def analyze_with_resemblyzer(audio_path: str) -> Dict[str, Any]:
+    try:
+        from resemblyzer import preprocess_wav
+        
+        encoder = get_voice_encoder()
+        if encoder is None:
+            return {'error': 'VoiceEncoder not available', 'is_deepfake': False, 'confidence': 0.5}
+        
+        wav = preprocess_wav(audio_path)
+        embedding = encoder.embed_utterance(wav)
+        
+        embedding_std = np.std(embedding)
+        embedding_mean = np.abs(np.mean(embedding))
+        embedding_max = np.max(np.abs(embedding))
+        
+        anomaly_score = 0.0
+        
+        if embedding_std < 0.15:
+            anomaly_score += 0.3
+        
+        if embedding_max > 0.8:
+            anomaly_score += 0.2
+        
+        if embedding_mean < 0.05:
+            anomaly_score += 0.2
+        
+        zero_crossings = np.sum(np.diff(np.sign(embedding)) != 0)
+        if zero_crossings < len(embedding) * 0.3:
+            anomaly_score += 0.3
+        
+        is_fake = anomaly_score > 0.5
+        confidence = min(anomaly_score, 1.0) if is_fake else max(1.0 - anomaly_score, 0.0)
+        
+        return {
+            'is_deepfake': is_fake,
+            'confidence': round(confidence, 3),
+            'label': 'FAKE' if is_fake else 'REAL',
+            'details': {
+                'embedding_std': round(float(embedding_std), 4),
+                'embedding_mean': round(float(embedding_mean), 4),
+                'anomaly_score': round(anomaly_score, 3),
+                'method': 'resemblyzer_voice_embedding'
+            }
+        }
+    except Exception as e:
+        logging.error(f"Resemblyzer analysis failed: {e}")
+        return {'error': str(e), 'is_deepfake': False, 'confidence': 0.5}
+
+
 def detect_audio_deepfake(url_or_path: str) -> Dict[str, Any]:
     temp_path = None
     
@@ -129,29 +193,8 @@ def detect_audio_deepfake(url_or_path: str) -> Dict[str, Any]:
             if not os.path.isfile(audio_input):
                 raise ValueError("File not found")
         
-        device = 0 if torch.cuda.is_available() else -1
-        voice_detector = pipeline(
-            "audio-classification",
-            model="facebook/wav2vec2-base",
-            device=device
-        )
-        result = voice_detector(audio_input)
-        
-        synth_score = 0.0
-        for item in result:
-            label = item['label'].lower()
-            if 'synthetic' in label or 'fake' in label or 'generated' in label:
-                synth_score = item['score']
-                break
-        
-        is_fake = synth_score > 0.65
-        
-        return {
-            "is_deepfake": is_fake,
-            "confidence": round(synth_score, 3),
-            "label": "FAKE" if is_fake else "REAL",
-            "details": result
-        }
+        result = analyze_with_resemblyzer(audio_input)
+        return result
     
     except ValueError as e:
         logging.error(f"Validation error: {e}")
