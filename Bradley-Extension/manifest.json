@@ -2,22 +2,53 @@
   "manifest_version": 3,
   "name": "Bradley AI - Deepfake Guardian",
   "version": "1.1.0",
-  "description": "Real-time deepfake protection",
-  "permissions": ["storage", "activeTab"],
-  "host_permissions": ["https://bradleyai.replit.app/*"],
+  "description": "Real-time deepfake protection powered by AI. Detects synthetic media across the web.",
+  "minimum_chrome_version": "88",
+
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+
+  "optional_permissions": [
+    "notifications"
+  ],
+
+  "host_permissions": [
+    "https://bradleyai.replit.app/*"
+  ],
+
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://bradleyai.replit.app"
+    "extension_pages": "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; connect-src 'self' https://bradleyai.replit.app"
   },
+
   "content_scripts": [{
     "matches": ["<all_urls>"],
     "js": ["content.js"],
     "css": ["content-styles.css"],
-    "run_at": "document_idle"
+    "run_at": "document_idle",
+    "all_frames": false
   }],
-  "background": { "service_worker": "background.js" },
-  "action": { "default_popup": "popup.html" },
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Bradley AI - Deepfake Guardian"
+  },
+
   "icons": {
     "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   }
