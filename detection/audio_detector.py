@@ -111,30 +111,45 @@ def get_deepfake_detector():
     global _encoder
     with _encoder_lock:
         if _encoder is None:
-            _encoder = pipeline(
-                "audio-classification",
-                model="asapp/asvspoof2019-laasist",
-                device=0 if torch.cuda.is_available() else -1
-            )
-            logging.info("AASIST deepfake detector loaded")
+            try:
+                _encoder = pipeline(
+                    "audio-classification",
+                    model="asapp/asvspoof2019-laasist",
+                    device=0 if torch.cuda.is_available() else -1
+                )
+                logging.info("AASIST deepfake detector loaded")
+            except Exception as e:
+                logging.error(f"Failed to load detector: {e}")
+                return None
         return _encoder
 
 
 def analyze_audio(audio_path: str) -> Dict[str, Any]:
     detector = get_deepfake_detector()
+    if detector is None:
+        return {"is_deepfake": False, "confidence": 0.5, "label": "UNKNOWN", "error": "Detector not available"}
+    
     try:
-        results = detector(audio_path)
+        import soundfile as sf
+        import librosa
+        audio, sr = librosa.load(audio_path, sr=16000)
+        
+        results = detector(audio)
         spoof_score = max((r["score"] for r in results if r["label"] == "spoof"), default=0)
         is_fake = spoof_score > 0.7
+        
         return {
             "is_deepfake": is_fake,
             "confidence": round(spoof_score, 3),
             "label": "FAKE" if is_fake else "REAL",
             "details": results
         }
+    except ImportError as e:
+        logging.error(f"Missing dep: {e}")
+        return {"is_deepfake": False, "confidence": 0.5, "label": "ERROR", "error": "Audio libs missing"}
     except Exception as e:
         logging.error(f"Analysis failed: {e}")
-        return {"is_deepfake": False, "confidence": 0.0, "error": str(e)}
+        return {"is_deepfake": False, "confidence": 0.5, "label": "ERROR", "error": str(e)}
 
 
 def detect_audio_deepfake(url_or_path: str) -> Dict[str, Any]:
@@ -145,7 +160,15 @@ def detect_audio_deepfake(url_or_path: str) -> Dict[str, Any]:
             audio_path = temp_path
         else:
             audio_path = safe_file_path(url_or_path)
+            if not os.path.isfile(audio_path):
+                raise ValueError("File not found")
         return analyze_audio(audio_path)
+    except ValueError as e:
+        logging.error(f"Validation error: {e}")
+        return {"error": str(e), "is_deepfake": False, "confidence": 0.0}
+    except Exception as e:
+        logging.critical(f"Unexpected error: {e}")
+        return {"error": "Processing failed", "is_deepfake": False, "confidence": 0.0}
     finally:
         if temp_path and os.path.exists(temp_path):
             try:

@@ -17,3 +17,5 @@ urllib3
 pytest
 ipfshttpclient
 resemblyzer
+soundfile
+torchaudio
