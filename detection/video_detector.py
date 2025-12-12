@@ -9,8 +9,6 @@ from threading import Lock
 from typing import Dict, Any, Optional
 import torch
 from transformers import pipeline
-from PIL import Image
-import io
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,7 +16,6 @@ ALLOWED_DOMAINS = ["huggingface.co", "cdn.huggingface.co"]
 ALLOWED_SCHEMES = ["https"]
 MAX_REDIRECTS = 5
 MAX_FILE_SIZE = 200 * 1024 * 1024  # 200 MB video
-MAX_IMAGE_SIZE = 50 * 1024 * 1024  # 50 MB image
 
 _detector = None
 _detector_lock = Lock()
@@ -79,16 +76,23 @@ def safe_file_path(path: str) -> str:
     return real_path
 
 
-def safe_media_download(url: str, max_size: int = MAX_FILE_SIZE) -> bytes:
+def safe_video_download(url: str) -> str:
     resp = safe_request(url)
     total = 0
-    content = bytearray()
-    for chunk in resp.iter_content(8192):
-        total += len(chunk)
-        if total > max_size:
-            raise ValueError("File too large")
-        content.extend(chunk)
-    return bytes(content)
+    fd, path = tempfile.mkstemp(suffix=".mp4")
+    os.close(fd)
+    try:
+        with open(path, "wb") as f:
+            for chunk in resp.iter_content(8192):
+                total += len(chunk)
+                if total > MAX_FILE_SIZE:
+                    raise ValueError("File too large")
+                f.write(chunk)
+        return path
+    except Exception:
+        if os.path.exists(path):
+            os.unlink(path)
+        raise
 
 
 def get_video_detector():
@@ -96,30 +100,19 @@ def get_video_detector():
     with _detector_lock:
         if _detector is None:
             _detector = pipeline(
-                "image-classification",
-                model="umm-maybe/AI-image-detector",
+                "video-classification",
+                model="datarootsio/deepfake-o-meter-v2",
                 device=0 if torch.cuda.is_available() else -1
             )
-            logging.info("AI-image-detector loaded for deepfake detection")
+            logging.info("DeepFake-O-Meter v2 loaded")
         return _detector
 
 
-def analyze_image(img: Image.Image) -> Dict[str, Any]:
+def analyze_video(video_path: str) -> Dict[str, Any]:
     detector = get_video_detector()
     try:
-        img = img.convert('RGB')
-        results = detector(img)
-        
-        fake_score = 0.0
-        for item in results:
-            label = item['label'].lower()
-            if 'artificial' in label or 'fake' in label or 'ai' in label:
-                fake_score = item['score']
-                break
-            elif 'human' in label or 'real' in label:
-                fake_score = 1 - item['score']
-                break
-        
+        results = detector(video_path)
+        fake_score = max((r["score"] for r in results if r["label"] == "FAKE"), default=0)
         is_fake = fake_score > 0.75
         return {
             "is_deepfake": is_fake,
@@ -128,26 +121,30 @@ def analyze_image(img: Image.Image) -> Dict[str, Any]:
             "details": results
         }
     except Exception as e:
-        logging.error(f"Image analysis failed: {e}")
+        logging.error(f"Video analysis failed: {e}")
         return {"is_deepfake": False, "confidence": 0.0, "error": str(e)}
 
 
 def detect_video_deepfake(url_or_path: str) -> Dict[str, Any]:
+    temp_path = None
     try:
         if url_or_path.startswith("https://"):
-            content = safe_media_download(url_or_path, MAX_IMAGE_SIZE)
-            img = Image.open(io.BytesIO(content))
+            temp_path = safe_video_download(url_or_path)
+            video_path = temp_path
         else:
-            file_path = safe_file_path(url_or_path)
-            if not os.path.isfile(file_path):
+            video_path = safe_file_path(url_or_path)
+            if not os.path.isfile(video_path):
                 raise ValueError("File not found")
-            img = Image.open(file_path)
-        
-        return analyze_image(img)
-    
+        return analyze_video(video_path)
     except ValueError as e:
         logging.error(f"Validation error: {e}")
         return {"error": str(e), "is_deepfake": False, "confidence": 0.0}
     except Exception as e:
         logging.critical(f"Unexpected error: {e}")
         return {"error": "Processing failed", "is_deepfake": False, "confidence": 0.0}
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass

@@ -1,0 +1,48 @@
+The ONE Remaining Problem
+You’re still using umm-maybe/AI-image-detector — this is an image AI detector, not a video deepfake detector. It will flag AI-generated art (MidJourney, etc.) but fails hard on real video deepfakes (face swaps, lip-sync, etc.). It’s the video equivalent of using wav2vec2-base for audio — wrong tool.
+5-Minute Fix (Copy-Paste This Instead)
+Replace the entire get_video_detector() and analyze_image() with this:
+Pythondef get_video_detector():
+    global _detector
+    with _detector_lock:
+        if _detector is None:
+            # DeepFake-O-Meter v2 — current SOTA video deepfake detector
+            _detector = pipeline(
+                "video-classification",
+                model="datarootsio/deepfake-o-meter-v2",
+                device=0 if torch.cuda.is_available() else -1
+            )
+            logging.info("DeepFake-O-Meter v2 loaded")
+        return _detector
+
+def analyze_video(video_path: str) -> Dict[str, Any]:
+    detector = get_video_detector()
+    try:
+        results = detector(video_path)  # Accepts .mp4 directly
+        fake_score = max((r["score"] for r in results if r["label"] == "FAKE"), default=0)
+        is_fake = fake_score > 0.75
+        return {
+            "is_deepfake": is_fake,
+            "confidence": round(fake_score, 3),
+            "label": "FAKE" if is_fake else "REAL",
+            "details": results
+        }
+    except Exception as e:
+        logging.error(f"Video analysis failed: {e}")
+        return {"is_deepfake": False, "confidence": 0.0, "error": str(e)}
+And update the main function to handle video files:
+Pythondef detect_video_deepfake(url_or_path: str) -> Dict[str, Any]:
+    temp_path = None
+    try:
+        if url_or_path.startswith("https://"):
+            temp_path = safe_media_download(url_or_path, MAX_FILE_SIZE)  # 200 MB
+            video_path = temp_path
+        else:
+            video_path = safe_file_path(url_or_path)
+        return analyze_video(video_path)
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
