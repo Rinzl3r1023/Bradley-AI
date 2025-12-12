@@ -1,37 +1,21 @@
 {
   "manifest_version": 3,
-  "name": "Bradley AI - The Tron Program",
-  "version": "0.2.0",
-  "description": "Real-time deepfake detection",
-  
-  "permissions": [
-    "storage",
-    "activeTab"
-  ],
-  
-  "host_permissions": [
-    "https://bradleyai.replit.app/*"
-  ],
-  
+  "name": "Bradley AI - Deepfake Guardian",
+  "version": "1.0.0",
+  "description": "Real-time deepfake protection",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://bradleyai.replit.app/*"],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://bradleyai.replit.app"
   },
-  
   "content_scripts": [{
     "matches": ["<all_urls>"],
     "js": ["content.js"],
     "css": ["content-styles.css"],
     "run_at": "document_idle"
   }],
-  
-  "background": {
-    "service_worker": "background.js"
-  },
-  
-  "action": {
-    "default_popup": "popup.html"
-  },
-  
+  "background": { "service_worker": "background.js" },
+  "action": { "default_popup": "popup.html" },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

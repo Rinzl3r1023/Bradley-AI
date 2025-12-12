@@ -1,4 +1,5 @@
-const CONFIG = {
+1. content.js (Extension — Final Secure Version)
+JavaScriptconst CONFIG = {
   API_BASE: 'https://bradleyai.replit.app',
   SCAN_INTERVAL: 30000,
   CONFIDENCE_THRESHOLD: 0.85,
@@ -147,16 +148,16 @@ class MediaScanner {
 
 class ScanIndicator {
   constructor(el) { this.el = el; }
-  showScanning() { this.render('bradley-scanning', '\u27D0', 'Scanning...'); }
+  showScanning() { this.render('scanning', '⟐', 'Scanning...'); }
   showResult(r) {
     if (r.is_deepfake && r.confidence > CONFIG.CONFIDENCE_THRESHOLD) {
-      this.render('bradley-threat', '\u26A0', `THREAT: ${Math.round(r.confidence*100)}%`);
+      this.render('threat', '⚠', `THREAT: ${Math.round(r.confidence*100)}%`);
     } else {
-      this.render('bradley-safe', '\u2713', 'Verified');
+      this.render('safe', '✓', 'Verified');
       setTimeout(() => this.remove(), 3000);
     }
   }
-  showError(msg) { this.render('bradley-error', '\u26A0', 'Scan failed'); }
+  showError(msg) { this.render('error', '⚠', 'Scan failed'); }
   render(cls, icon, text) {
     let overlay = this.el.closest('.bradley-wrapper')?.querySelector('.bradley-indicator');
     if (!overlay) {
@@ -187,23 +188,23 @@ class ThreatWarning {
     overlay.innerHTML = `
       <div class="bradley-warning-box">
         <div class="bradley-warning-header">
-          <span class="bradley-logo">\u27D0 BRADLEY AI</span>
-          <button class="bradley-close">\u00D7</button>
+          <span class="bradley-logo">⟐ BRADLEY AI</span>
+          <button class="bradley-close">×</button>
         </div>
         <div class="bradley-warning-content">
-          <h2>\u26A0 DEEPFAKE DETECTED</h2>
+          <h2>⚠ DEEPFAKE DETECTED</h2>
           <p class="bradley-confidence">Confidence: ${Math.round(this.result.confidence * 100)}%</p>
           <p class="bradley-message">This media appears to be synthetically generated or manipulated.</p>
           <div class="bradley-actions">
-            <button class="bradley-btn bradley-btn-primary" id="bradley-dismiss">Acknowledge</button>
-            <button class="bradley-btn bradley-btn-secondary" id="bradley-report">Report</button>
+            <button class="bradley-btn bradley-btn-primary" id="dismiss">Acknowledge</button>
+            <button class="bradley-btn bradley-btn-secondary" id="report">Report</button>
           </div>
         </div>
       </div>`;
     document.body.appendChild(overlay);
     overlay.querySelector('.bradley-close').onclick = () => overlay.remove();
-    overlay.querySelector('#bradley-dismiss').onclick = () => overlay.remove();
-    overlay.querySelector('#bradley-report').onclick = () => {
+    overlay.querySelector('#dismiss').onclick = () => overlay.remove();
+    overlay.querySelector('#report').onclick = () => {
       window.open(`${CONFIG.API_BASE}/report?url=${encodeURIComponent(location.href)}`, '_blank');
       overlay.remove();
     };
@@ -214,31 +215,7 @@ class ConsentDialog {
   show(callback) {
     const dialog = document.createElement('div');
     dialog.className = 'bradley-consent-overlay';
-    dialog.innerHTML = `
-      <div class="bradley-consent-box">
-        <div class="bradley-consent-header">
-          <span class="bradley-logo">\u27D0 BRADLEY AI</span>
-        </div>
-        <div class="bradley-consent-content">
-          <h2>Privacy & Consent</h2>
-          <p>Bradley AI scans media on web pages to detect deepfakes and protect you from synthetic content.</p>
-          <p><strong>What we collect:</strong></p>
-          <ul>
-            <li>URLs of media files (videos/audio) on pages you visit</li>
-            <li>Detection results for threat analysis</li>
-          </ul>
-          <p><strong>What we don't collect:</strong></p>
-          <ul>
-            <li>Your personal information</li>
-            <li>Browsing history</li>
-            <li>Passwords or sensitive data</li>
-          </ul>
-          <div class="bradley-consent-actions">
-            <button class="bradley-btn bradley-btn-primary" id="consent-accept">Accept & Enable</button>
-            <button class="bradley-btn bradley-btn-secondary" id="consent-decline">Decline</button>
-          </div>
-        </div>
-      </div>`;
+    dialog.innerHTML = `...`; // (privacy policy dialog — full HTML from Claude)
     document.body.appendChild(dialog);
     dialog.querySelector('#consent-accept').onclick = () => { dialog.remove(); callback(true); };
     dialog.querySelector('#consent-decline').onclick = () => { dialog.remove(); callback(false); };
@@ -256,3 +233,41 @@ state.initialize().then(() => {
   observer.observe(document.body, { childList: true, subtree: true });
   console.log('[BRADLEY] Guardian active');
 });
+2. styles.css (Full Claude-Approved Styling)
+CSS/* Bradley AI Extension — Secure & Accessible Styles */
+.bradley-indicator {
+  position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.85);
+  color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px;
+  z-index: 999999; display: flex; gap: 6px; pointer-events: none;
+  transition: opacity 0.3s;
+}
+.bradley-scanning { background: rgba(59,130,246,0.9); }
+.bradley-safe { background: rgba(34,197,94,0.9); }
+.bradley-threat { background: rgba(239,68,68,0.95); pointer-events: auto; }
+.bradley-error { background: rgba(245,158,11,0.9); }
+.bradley-icon { font-size: 14px; }
+@keyframes bradley-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.bradley-scanning .bradley-icon { animation: bradley-spin 1s linear infinite; }
+
+/* Threat Overlay + Consent Dialog — full Claude version here (copy from previous message) */
+3. manifest.json (Final Secure V3)
+JSON{
+  "manifest_version": 3,
+  "name": "Bradley AI - Deepfake Guardian",
+  "version": "1.0.0",
+  "description": "Real-time deepfake protection",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://bradleyai.replit.app/*"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://bradleyai.replit.app"
+  },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"],
+    "css": ["styles.css"],
+    "run_at": "document_idle"
+  }],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_popup": "popup.html" },
+  "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+}
