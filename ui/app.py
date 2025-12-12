@@ -503,6 +503,74 @@ def report_threat():
         return response, 500
 
 
+@app.route('/detect_video_deepfake', methods=['POST', 'OPTIONS'])
+def detect_video_endpoint():
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, X-Bradley-Extension')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+    
+    try:
+        data = request.get_json()
+        if not data or not data.get('url_or_path'):
+            response = jsonify({'error': 'url_or_path required', 'is_deepfake': False, 'confidence': 0})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response, 400
+        
+        media_url = data.get('url_or_path')
+        is_valid, error_msg = validate_media_url(media_url)
+        if not is_valid:
+            response = jsonify({'error': error_msg, 'is_deepfake': False, 'confidence': 0})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response, 400
+        
+        result = detect_video_deepfake(media_url)
+        
+        response = jsonify(result)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+    except Exception as e:
+        response = jsonify({'error': str(e), 'is_deepfake': False, 'confidence': 0})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 500
+
+
+@app.route('/detect_audio_deepfake', methods=['POST', 'OPTIONS'])
+def detect_audio_endpoint():
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, X-Bradley-Extension')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+    
+    try:
+        data = request.get_json()
+        if not data or not data.get('url_or_path'):
+            response = jsonify({'error': 'url_or_path required', 'is_deepfake': False, 'confidence': 0})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response, 400
+        
+        media_url = data.get('url_or_path')
+        is_valid, error_msg = validate_media_url(media_url)
+        if not is_valid:
+            response = jsonify({'error': error_msg, 'is_deepfake': False, 'confidence': 0})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response, 400
+        
+        result = detect_audio_deepfake(media_url)
+        
+        response = jsonify(result)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+    except Exception as e:
+        response = jsonify({'error': str(e), 'is_deepfake': False, 'confidence': 0})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 500
+
+
 @app.after_request
 def add_header(response):
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'

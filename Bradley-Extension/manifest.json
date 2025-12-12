@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bradley AI – Deepfake Guardian",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Real-time deepfake & voice-clone detection while you browse. Powered by the Bradley Grid.",
   "icons": {
     "16": "icons/icon16.png",
@@ -14,8 +14,12 @@
     "notifications"
   ],
   "host_permissions": [
+    "https://bradleyai.replit.app/*",
     "<all_urls>"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://bradleyai.replit.app"
+  },
   "background": {
     "service_worker": "background.js"
   },

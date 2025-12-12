@@ -66,21 +66,21 @@ async function analyzeMedia(element, url) {
   try {
     const mediaType = element.tagName.toLowerCase() === 'video' ? 'video' : 'audio';
     
-    const response = await fetch(`${BRADLEY_API}/api/detect`, {
+    const endpoint = mediaType === 'video' 
+      ? `${BRADLEY_API}/detect_video_deepfake`
+      : `${BRADLEY_API}/detect_audio_deepfake`;
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
         'X-Bradley-Extension': 'v0.2.0'
       },
-      body: JSON.stringify({ 
-        url: url,
-        type: mediaType,
-        page_url: window.location.href
-      })
+      body: JSON.stringify({ url_or_path: url })
     });
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      throw new Error(`HTTP ${response.status}`);
     }
 
     const result = await response.json();
