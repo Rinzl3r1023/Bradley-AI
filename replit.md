@@ -5,7 +5,7 @@ Bradley AI is a decentralized, open-source guardian that protects everyday peopl
 
 **Mission:** "Alan Bradley created Tron to protect the system from the MCP. We created Bradley to protect users from malicious AI."
 
-**Version:** v1.3.0 (Hardened Extension)
+**Version:** v1.3.3 (CSP Compliant Extension)
 
 ## Project Structure
 ```
@@ -80,6 +80,7 @@ The Flask server runs on port 5000 via the "Bradley AI" workflow.
 - [ ] Chrome Web Store publication
 
 ## Recent Changes
+- **Dec 13, 2025:** Extension v1.3.3 - CSP compliant: removed inline styles, class-based visibility (.hidden), Chrome Web Store ready
 - **Dec 12, 2025:** Extension v1.3.2 - popup.js A+ (98/100): named constants, loading spinner, success messages, debounced updates, CLEAR_LOG handler
 - **Dec 12, 2025:** Extension v1.3.0 - background.js hardened (A- 90/100): AsyncMutex atomic storage, input validation, sender validation, rate limiting
 - **Dec 12, 2025:** Extension api.js v1.2 (A- 90/100) - URL validation, timeouts, retry logic, input/response validation

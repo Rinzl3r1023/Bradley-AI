@@ -4,6 +4,11 @@
   box-sizing: border-box;
 }
 
+/* CSP-compliant visibility control */
+.hidden {
+  display: none !important;
+}
+
 body {
   font-family: 'Courier New', monospace;
   background: #0a0a0a;
