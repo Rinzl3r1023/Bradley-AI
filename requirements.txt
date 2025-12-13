@@ -20,3 +20,4 @@ resemblyzer
 soundfile
 torchaudio
 firebase-admin
+flask-limiter

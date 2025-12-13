@@ -1,9 +1,13 @@
 import os
 import sys
 import json
+import hmac
+from functools import wraps
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.utils import secure_filename
 
@@ -21,19 +25,68 @@ def init_firebase():
         return True
     
     firebase_creds = os.environ.get('FIREBASE_CREDENTIALS')
-    if firebase_creds:
-        try:
-            cred_dict = json.loads(firebase_creds)
-            cred = credentials.Certificate(cred_dict)
-            firebase_admin.initialize_app(cred)
-            firestore_db = firestore.client()
-            print("[BRADLEY] Firebase Firestore initialized successfully")
-            return True
-        except Exception as e:
-            print(f"[BRADLEY] Firebase init error: {e}")
-            return False
-    else:
+    if not firebase_creds:
         print("[BRADLEY] FIREBASE_CREDENTIALS not set - Firestore disabled")
+        return False
+    
+    try:
+        cred_dict = json.loads(firebase_creds)
+        cred = credentials.Certificate(cred_dict)
+        firebase_admin.initialize_app(cred)
+        firestore_db = firestore.client()
+        print("[BRADLEY] Firebase Firestore initialized successfully")
+        return True
+    except json.JSONDecodeError:
+        print("[BRADLEY] Invalid Firebase JSON format")
+        return False
+    except Exception as e:
+        print(f"[BRADLEY] Firebase init failed: {e}")
+        return False
+
+
+ALLOWED_ORIGINS = {
+    'https://bradleyai.replit.app',
+    'https://bradley-ai.replit.app',
+}
+
+
+def require_admin_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.headers.get('Authorization', '')
+        if not auth.startswith('Bearer '):
+            return jsonify({'error': 'Unauthorized'}), 401
+        token = auth[7:]
+        expected = os.environ.get('ADMIN_API_KEY')
+        if not expected or not hmac.compare_digest(token, expected):
+            return jsonify({'error': 'Forbidden'}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+
+def validate_email(email):
+    if not email or not isinstance(email, str):
+        return False
+    email = email.strip().lower()
+    if len(email) > 255:
+        return False
+    import re
+    pattern = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$')
+    return bool(pattern.match(email))
+
+
+def validate_wallet(wallet):
+    if not wallet or not isinstance(wallet, str):
+        return False
+    wallet = wallet.strip()
+    if not wallet.startswith('0x'):
+        return False
+    if len(wallet) != 42:
+        return False
+    try:
+        int(wallet[2:], 16)
+        return True
+    except ValueError:
         return False
 
 class Base(DeclarativeBase):
@@ -50,6 +103,13 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 }
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 app.config["UPLOAD_FOLDER"] = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
+
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["1000 per day", "100 per hour"],
+    storage_uri="memory://",
+)
 
 ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv', 'webm'}
 ALLOWED_AUDIO_EXTENSIONS = {'wav', 'mp3', 'ogg', 'flac', 'm4a'}
@@ -379,22 +439,29 @@ def get_detections():
 
 
 @app.route('/api/beta/signup', methods=['POST'])
+@limiter.limit("5/hour")
 def beta_signup_submit():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     
-    if not data or not data.get('email'):
-        return jsonify({'error': 'Email is required'}), 400
+    email = data.get('email', '').strip().lower()
+    wallet = data.get('wallet_address', '').strip()
+    
+    if not validate_email(email):
+        return jsonify({'error': 'Invalid email address'}), 400
+    
+    if wallet and not validate_wallet(wallet):
+        return jsonify({'error': 'Invalid wallet address'}), 400
     
     try:
-        existing = db.session.query(BetaUser).filter_by(email=data['email']).first()
+        existing = db.session.query(BetaUser).filter_by(email=email).first()
         if existing:
             return jsonify({'error': 'Email already registered'}), 409
         
         user = BetaUser(
-            email=data['email'],
+            email=email,
             name=data.get('name'),
             referral_source=data.get('referral_source', 'business_lounge'),
-            wallet_address=data.get('wallet_address')
+            wallet_address=wallet if wallet else None
         )
         db.session.add(user)
         db.session.commit()
@@ -600,10 +667,20 @@ def detect_audio_endpoint():
 
 
 @app.after_request
-def add_header(response):
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
+def add_security_headers(response):
+    origin = request.headers.get('Origin')
+    if origin in ALLOWED_ORIGINS:
+        response.headers['Access-Control-Allow-Origin'] = origin
+    
+    response.headers.update({
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'Cache-Control': 'no-store',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+    })
     return response
 
 
@@ -681,6 +758,7 @@ def submit_node_request():
 
 
 @app.route('/api/nodes/approve', methods=['POST'])
+@require_admin_auth
 def approve_node():
     if not firestore_db:
         return jsonify({'error': 'Firestore not configured', 'success': False}), 503
