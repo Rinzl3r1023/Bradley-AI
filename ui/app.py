@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -7,6 +8,33 @@ from sqlalchemy.orm import DeclarativeBase
 from werkzeug.utils import secure_filename
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import firebase_admin
+from firebase_admin import credentials, firestore
+
+firestore_db = None
+
+def init_firebase():
+    global firestore_db
+    if firebase_admin._apps:
+        firestore_db = firestore.client()
+        return True
+    
+    firebase_creds = os.environ.get('FIREBASE_CREDENTIALS')
+    if firebase_creds:
+        try:
+            cred_dict = json.loads(firebase_creds)
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred)
+            firestore_db = firestore.client()
+            print("[BRADLEY] Firebase Firestore initialized successfully")
+            return True
+        except Exception as e:
+            print(f"[BRADLEY] Firebase init error: {e}")
+            return False
+    else:
+        print("[BRADLEY] FIREBASE_CREDENTIALS not set - Firestore disabled")
+        return False
 
 class Base(DeclarativeBase):
     pass
@@ -578,6 +606,104 @@ def add_header(response):
     response.headers['Expires'] = '0'
     return response
 
+
+@app.route('/api/nodes/pending', methods=['GET'])
+def get_pending_nodes():
+    if not firestore_db:
+        return jsonify({'error': 'Firestore not configured', 'nodes': []}), 503
+    
+    try:
+        nodes_ref = firestore_db.collection('pendingNodes')
+        docs = nodes_ref.where('status', '==', 'pending').stream()
+        
+        nodes = []
+        for doc in docs:
+            node_data = doc.to_dict()
+            node_data['id'] = doc.id
+            nodes.append(node_data)
+        
+        return jsonify({'nodes': nodes, 'count': len(nodes)})
+    except Exception as e:
+        return jsonify({'error': str(e), 'nodes': []}), 500
+
+
+@app.route('/api/nodes/submit', methods=['POST', 'OPTIONS'])
+def submit_node_request():
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+    
+    if not firestore_db:
+        response = jsonify({'error': 'Firestore not configured', 'success': False})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 503
+    
+    try:
+        data = request.get_json()
+        if not data:
+            response = jsonify({'error': 'JSON body required', 'success': False})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response, 400
+        
+        wallet = data.get('wallet', '').strip()
+        email = data.get('email', '').strip()
+        
+        if not wallet or not wallet.startswith('0x') or len(wallet) != 42:
+            response = jsonify({'error': 'Valid Ethereum wallet address required', 'success': False})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response, 400
+        
+        node_data = {
+            'wallet': wallet.lower(),
+            'email': email if email else None,
+            'status': 'pending',
+            'submittedAt': firestore.SERVER_TIMESTAMP,
+            'source': 'web'
+        }
+        
+        doc_ref = firestore_db.collection('pendingNodes').document(wallet.lower())
+        doc_ref.set(node_data, merge=True)
+        
+        response = jsonify({
+            'success': True,
+            'message': 'Node request submitted! You will be notified when approved.',
+            'wallet': wallet.lower()
+        })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+    except Exception as e:
+        response = jsonify({'error': str(e), 'success': False})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 500
+
+
+@app.route('/api/nodes/approve', methods=['POST'])
+def approve_node():
+    if not firestore_db:
+        return jsonify({'error': 'Firestore not configured', 'success': False}), 503
+    
+    try:
+        data = request.get_json()
+        wallet = data.get('wallet', '').strip().lower()
+        
+        if not wallet:
+            return jsonify({'error': 'Wallet address required', 'success': False}), 400
+        
+        doc_ref = firestore_db.collection('pendingNodes').document(wallet)
+        doc_ref.update({
+            'status': 'approved',
+            'approvedAt': firestore.SERVER_TIMESTAMP
+        })
+        
+        return jsonify({'success': True, 'message': f'Node {wallet} approved!'})
+    except Exception as e:
+        return jsonify({'error': str(e), 'success': False}), 500
+
+
+init_firebase()
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

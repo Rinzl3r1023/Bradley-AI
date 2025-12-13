@@ -64,11 +64,15 @@ Bradley-AI/
 - `POST /api/registry/add` - Add Business Lounge node to registry
 - `POST /api/detect` - Extension API: Analyze remote media URL (CORS enabled)
 - `POST /api/report` - Extension API: Report threat for community review
+- `GET /api/nodes/pending` - Get pending node approval queue
+- `POST /api/nodes/submit` - Submit wallet for node approval
+- `POST /api/nodes/approve` - Approve a pending node (admin)
 
 ## Environment Variables
 - `DATABASE_URL` - PostgreSQL connection string (auto-configured)
 - `SESSION_SECRET` - Flask session secret
 - `XAI_API_KEY` - xAI Grok API key for AI-enhanced analysis (optional)
+- `FIREBASE_CREDENTIALS` - Firebase service account JSON (for Firestore node queue)
 
 ## Running the Project
 The Flask server runs on port 5000 via the "Bradley AI" workflow.
@@ -80,6 +84,7 @@ The Flask server runs on port 5000 via the "Bradley AI" workflow.
 - [ ] Chrome Web Store publication
 
 ## Recent Changes
+- **Dec 13, 2025:** Firebase Firestore integration for pending node approval queue (wallet-based beta)
 - **Dec 13, 2025:** Extension v1.3.3 - CSP compliant: removed inline styles, class-based visibility (.hidden), Chrome Web Store ready
 - **Dec 12, 2025:** Extension v1.3.2 - popup.js A+ (98/100): named constants, loading spinner, success messages, debounced updates, CLEAR_LOG handler
 - **Dec 12, 2025:** Extension v1.3.0 - background.js hardened (A- 90/100): AsyncMutex atomic storage, input validation, sender validation, rate limiting
