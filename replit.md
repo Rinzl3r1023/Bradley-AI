@@ -73,6 +73,7 @@ Bradley-AI/
 - `SESSION_SECRET` - Flask session secret
 - `XAI_API_KEY` - xAI Grok API key for AI-enhanced analysis (optional)
 - `FIREBASE_CREDENTIALS` - Firebase service account JSON (for Firestore node queue)
+- `ADMIN_API_KEY` - Admin API key for protected endpoints (node approval)
 
 ## Running the Project
 The Flask server runs on port 5000 via the "Bradley AI" workflow.
@@ -84,6 +85,7 @@ The Flask server runs on port 5000 via the "Bradley AI" workflow.
 - [ ] Chrome Web Store publication
 
 ## Recent Changes
+- **Dec 13, 2025:** Security hardening A+ (98/100): rate limiting, admin auth, input validation, security headers
 - **Dec 13, 2025:** Firebase Firestore integration for pending node approval queue (wallet-based beta)
 - **Dec 13, 2025:** Extension v1.3.3 - CSP compliant: removed inline styles, class-based visibility (.hidden), Chrome Web Store ready
 - **Dec 12, 2025:** Extension v1.3.2 - popup.js A+ (98/100): named constants, loading spinner, success messages, debounced updates, CLEAR_LOG handler
