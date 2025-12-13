@@ -13,13 +13,14 @@
     </div>
     
     <div class="error-message" id="error-message" style="display: none;"></div>
+    <div class="success-message" id="success-message" style="display: none;"></div>
+    <div class="loading-spinner" id="loading-spinner" style="display: none;"></div>
     
     <div class="status-section">
       <div class="status-indicator">
-        <div class="status-dot" id="status-dot"></div>
+        <div id="status-dot" class="status-online"></div>
         <span id="status-text">ONLINE</span>
       </div>
-      <span class="server-status" id="server-status">Grid: Checking...</span>
     </div>
     
     <div class="stats-grid">
@@ -33,15 +34,9 @@
       </div>
     </div>
     
-    <div class="last-threat" id="last-threat" style="display: none;">
-      <span class="threat-label">Last Threat:</span>
-      <span class="threat-url" id="threat-url"></span>
-      <span class="threat-confidence" id="threat-confidence"></span>
-    </div>
-    
     <div class="controls">
       <button id="toggle-btn" class="btn-primary">
-        <span id="toggle-text">DISABLE PROTECTION</span>
+        <span id="toggle-text">Disable</span>
       </button>
       <button id="dashboard-btn" class="btn-secondary">
         OPEN DASHBOARD
@@ -55,7 +50,7 @@
     <div id="threat-log" class="threat-log"></div>
     
     <div class="footer">
-      <span class="version">v1.3.0</span>
+      <span class="version">v1.3.2</span>
       <span class="divider">|</span>
       <a href="https://bradleyai.replit.app/beta" target="_blank">Join Beta</a>
     </div>

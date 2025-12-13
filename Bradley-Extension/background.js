@@ -269,6 +269,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .then(() => sendResponse({ success: true }))
       .catch(err => sendResponse({ success: false, error: err.message }));
     return true;
+    
+  } else if (message.type === 'CLEAR_LOG') {
+    chrome.storage.local.set({ threatHistory: [] })
+      .then(() => sendResponse({ success: true }))
+      .catch(err => sendResponse({ success: false, error: err.message }));
+    return true;
   }
   
   sendResponse({ success: false, error: 'Unknown message type' });
