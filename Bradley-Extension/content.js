@@ -160,7 +160,19 @@ class MediaScanner {
       const result = await this.apiClient.analyzeMedia(url, mediaType);
       element.dataset.bradleyScanned = 'complete';
       indicator.showResult(result);
+      chrome.runtime.sendMessage({
+        type: 'SCAN_COMPLETE',
+        data: { url, result }
+      }).catch(err => console.error('[BRADLEY] Message failed:', err));
       if (result.is_deepfake && result.confidence > CONFIG.CONFIDENCE_THRESHOLD) {
+        chrome.runtime.sendMessage({
+          type: 'THREAT',
+          data: { 
+            confidence: result.confidence,
+            type: mediaType === 'video' ? 'deepfake' : 'voice_clone'
+          },
+          url: url
+        }).catch(err => console.error('[BRADLEY] Message failed:', err));
         new ThreatWarning(result).show();
       }
     } catch (error) {
