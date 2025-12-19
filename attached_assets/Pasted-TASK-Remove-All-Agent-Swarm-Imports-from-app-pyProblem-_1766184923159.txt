@@ -1,0 +1,63 @@
+TASK: Remove All Agent/Swarm Imports from app.pyProblem: app.py is trying to import from the disabled agents/ folder, causing critical errors and preventing the video detection API from working.Solution: Remove or comment out all agent-related imports and references.FILE TO EDIT: app.pyCHANGE 1: Remove Swarm Import and Stub (Lines ~279-292)Find these lines (around line 279-292):pythonfrom relay.node import grid_node, get_registry_stats, add_lounge_node
+
+class SwarmStub:
+    """Stub for disabled BradleySwarm - agents module archived for MVP"""
+    scans_completed = 0
+    threats_detected = 0
+    def run_sample_threat(self):
+        return {"status": "demo", "message": "Swarm disabled for MVP", "is_threat": False, "confidence": 0.0}
+    def analyze_remote_media(self, url, media_type):
+        return {"status": "disabled", "message": "Use /detect_video_deepfake or /detect_audio_deepfake endpoints", "is_deepfake": False, "confidence": 0.0}
+
+swarm = SwarmStub()Replace with:python# Agents module disabled for MVP - using direct detection functions instead
+# from relay.node import grid_node, get_registry_stats, add_lounge_node
+
+# Create minimal stubs for backward compatibility
+class GridNodeStub:
+    node_id = "standalone-node-001"
+    def get_status(self):
+        return {"status": "standalone", "node_id": self.node_id}
+
+grid_node = GridNodeStub()
+
+def get_registry_stats():
+    return {"total_nodes": 1, "active_nodes": 1}
+
+def add_lounge_node(endpoint):
+    return "stub-node-id"
+
+class SwarmStub:
+    """Stub for disabled BradleySwarm - agents module archived for MVP"""
+    scans_completed = 0
+    threats_detected = 0
+    def run_sample_threat(self):
+        return {
+            "status": "demo", 
+            "message": "Swarm disabled for MVP",
+            "video_result": {"is_deepfake": False, "confidence": 0.0},
+            "audio_result": {"is_deepfake": False, "confidence": 0.0}
+        }
+    def analyze_remote_media(self, url, media_type):
+        return {
+            "status": "disabled", 
+            "message": "Use /detect_video_deepfake or /detect_audio_deepfake endpoints", 
+            "is_deepfake": False, 
+            "confidence": 0.0
+        }
+
+swarm = SwarmStub()WHAT THIS DOES:
+Comments out the relay.node import (which might be importing agents)
+Creates stub replacements for grid_node, get_registry_stats, add_lounge_node
+Keeps SwarmStub (but fixes the run_sample_threat return value to include video_result/audio_result)
+Maintains backward compatibility (all existing code still works)
+VERIFY NO OTHER AGENT IMPORTS:Search the entire app.py file for:
+
+from agents
+import agents
+agents.
+If found, comment them out with # at the beginning of the line.AFTER MAKING CHANGES:
+Save the file
+Restart the Replit server (Stop → Run)
+Wait 2-3 minutes for full restart
+Check for errors in console (should be none now)
+END OF INSTRUCTIONS
