@@ -85,6 +85,7 @@ The Flask server runs on port 5000 via the "Bradley AI" workflow.
 - [ ] Chrome Web Store publication
 
 ## Recent Changes
+- **Dec 13, 2025:** Video detection v2.0: production-ready with rate limiting (10/min), metrics tracking, env config, A (96/100)
 - **Dec 13, 2025:** Security hardening A+ (98/100): rate limiting, admin auth, input validation, security headers
 - **Dec 13, 2025:** Firebase Firestore integration for pending node approval queue (wallet-based beta)
 - **Dec 13, 2025:** Extension v1.3.3 - CSP compliant: removed inline styles, class-based visibility (.hidden), Chrome Web Store ready

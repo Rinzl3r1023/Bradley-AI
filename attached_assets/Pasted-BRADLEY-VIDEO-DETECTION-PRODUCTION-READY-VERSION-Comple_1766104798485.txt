@@ -1,4 +1,8 @@
-"""
+BRADLEY VIDEO DETECTION - PRODUCTION-READY VERSION 🔒✅
+Complete rewrite with all critical fixes + recommended improvements.
+
+UPDATED CODE (Production-Ready):
+python"""
 Bradley AI Guardian - Deepfake Video Detection Module
 Production-ready version with security hardening, rate limiting, and monitoring.
 
@@ -21,17 +25,22 @@ from dataclasses import dataclass, field
 import torch
 from transformers import pipeline
 
+# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
+# ============================================================================
+# CONFIGURATION
+# ============================================================================
 
 @dataclass
 class Config:
     """Configuration for video deepfake detection."""
     
+    # Security settings
     allowed_domains: List[str] = field(default_factory=lambda: [
         "huggingface.co", 
         "cdn.huggingface.co"
@@ -40,21 +49,29 @@ class Config:
     max_redirects: int = 5
     max_file_size_mb: int = 200
     request_timeout_seconds: int = 10
+    
+    # Detection settings
     deepfake_threshold: float = 0.75
     supported_extensions: List[str] = field(default_factory=lambda: [
         '.mp4', '.avi', '.mov', '.mkv', '.webm'
     ])
+    
+    # Rate limiting settings
     rate_limit_requests: int = 10
     rate_limit_window_seconds: int = 60
+    
+    # Model settings
     model_name: str = "datarootsio/deepfake-o-meter-v2"
     model_revision: str = "main"
     
     @property
     def max_file_size_bytes(self) -> int:
+        """Convert MB to bytes."""
         return self.max_file_size_mb * 1024 * 1024
     
     @classmethod
     def from_env(cls) -> 'Config':
+        """Load configuration from environment variables."""
         return cls(
             allowed_domains=os.getenv(
                 "ALLOWED_DOMAINS", 
@@ -70,32 +87,59 @@ class Config:
         )
 
 
+# Global configuration instance
 config = Config.from_env()
 
+# ============================================================================
+# RATE LIMITING
+# ============================================================================
 
 class RateLimiter:
     """Thread-safe rate limiter using sliding window algorithm."""
     
     def __init__(self, max_requests: int, window_seconds: int):
+        """
+        Initialize rate limiter.
+        
+        Args:
+            max_requests: Maximum requests allowed in window
+            window_seconds: Time window in seconds
+        """
         self.max_requests = max_requests
         self.window = window_seconds
         self.requests: Dict[str, List[float]] = defaultdict(list)
         self.lock = Lock()
     
     def allow_request(self, key: str) -> bool:
+        """
+        Check if request is allowed under rate limit.
+        
+        Args:
+            key: Identifier for rate limit tracking (e.g., user_id, IP)
+            
+        Returns:
+            True if request allowed, False if rate limited
+        """
         with self.lock:
             now = time()
+            
+            # Clean expired timestamps
             self.requests[key] = [
                 timestamp for timestamp in self.requests[key]
                 if now - timestamp < self.window
             ]
+            
+            # Check if under limit
             if len(self.requests[key]) >= self.max_requests:
                 logger.warning(f"Rate limit exceeded for key: {key}")
                 return False
+            
+            # Record this request
             self.requests[key].append(now)
             return True
     
     def get_remaining(self, key: str) -> int:
+        """Get remaining requests for a key."""
         with self.lock:
             now = time()
             self.requests[key] = [
@@ -105,11 +149,15 @@ class RateLimiter:
             return max(0, self.max_requests - len(self.requests[key]))
 
 
+# Global rate limiter instance
 _rate_limiter = RateLimiter(
     max_requests=config.rate_limit_requests,
     window_seconds=config.rate_limit_window_seconds
 )
 
+# ============================================================================
+# METRICS/MONITORING
+# ============================================================================
 
 @dataclass
 class Metrics:
@@ -130,8 +178,10 @@ class Metrics:
         rate_limited: bool = False,
         validation_error: bool = False
     ):
+        """Record a request for metrics tracking."""
         with self._lock:
             self.total_requests += 1
+            
             if rate_limited:
                 self.rate_limited += 1
             elif validation_error:
@@ -140,14 +190,19 @@ class Metrics:
                 self.successful += 1
             else:
                 self.failed += 1
+            
             self._latencies.append(latency_ms)
+            
+            # Keep only last 1000 latencies to prevent memory growth
             if len(self._latencies) > 1000:
                 self._latencies = self._latencies[-1000:]
     
     def get_stats(self) -> Dict[str, Any]:
+        """Get current metrics statistics."""
         with self._lock:
-            total = max(self.total_requests, 1)
+            total = max(self.total_requests, 1)  # Avoid division by zero
             avg_latency = sum(self._latencies) / len(self._latencies) if self._latencies else 0
+            
             return {
                 "total_requests": self.total_requests,
                 "successful": self.successful,
@@ -160,6 +215,7 @@ class Metrics:
             }
     
     def reset(self):
+        """Reset all metrics (useful for testing)."""
         with self._lock:
             self.total_requests = 0
             self.successful = 0
@@ -169,11 +225,24 @@ class Metrics:
             self._latencies.clear()
 
 
+# Global metrics instance
 _metrics = Metrics()
 _start_time = time()
 
+# ============================================================================
+# SECURITY FUNCTIONS
+# ============================================================================
 
 def is_allowed_domain(hostname: str) -> bool:
+    """
+    Check if hostname is in allowed domains list.
+    
+    Args:
+        hostname: Domain name to check
+        
+    Returns:
+        True if allowed, False otherwise
+    """
     hostname = hostname.lower()
     return any(
         hostname == domain or hostname.endswith("." + domain)
@@ -182,6 +251,15 @@ def is_allowed_domain(hostname: str) -> bool:
 
 
 def is_private_ip(ip: str) -> bool:
+    """
+    Check if IP address is private/internal (SSRF prevention).
+    
+    Args:
+        ip: IP address string
+        
+    Returns:
+        True if private/internal, False if public
+    """
     try:
         addr = ipaddress.ip_address(ip)
         return (
@@ -190,24 +268,48 @@ def is_private_ip(ip: str) -> bool:
             addr.is_link_local or
             addr.is_multicast or 
             addr.is_reserved or
+            # CGNAT range (100.64.0.0/10)
             (addr.version == 4 and 100 << 24 <= int(addr) <= 103 << 24)
         )
     except ValueError:
+        # If invalid IP, assume private (fail-safe)
         return True
 
 
 def validate_url(url: str) -> Optional[str]:
+    """
+    Validate URL against security policy.
+    
+    Checks:
+    - Allowed scheme (HTTPS only)
+    - Allowed domain (whitelist)
+    - DNS resolution to public IP (SSRF prevention)
+    
+    Args:
+        url: URL to validate
+        
+    Returns:
+        Original URL if valid, None if invalid
+    """
     try:
         parsed = urllib.parse.urlparse(url)
+        
+        # Check scheme
         if parsed.scheme not in config.allowed_schemes:
             logger.warning(f"Disallowed scheme: {parsed.scheme}")
             return None
+        
+        # Check hostname exists
         if not parsed.hostname:
             logger.warning("URL missing hostname")
             return None
+        
+        # Check domain whitelist
         if not is_allowed_domain(parsed.hostname):
             logger.warning(f"Disallowed domain: {parsed.hostname}")
             return None
+        
+        # DNS resolution check (SSRF prevention)
         socket.setdefaulttimeout(5)
         try:
             for addr_info in socket.getaddrinfo(parsed.hostname, None):
@@ -220,79 +322,171 @@ def validate_url(url: str) -> Optional[str]:
             return None
         finally:
             socket.setdefaulttimeout(None)
+        
         return url
+        
     except Exception as e:
         logger.error(f"URL validation error: {e}")
         return None
 
 
 def safe_request(url: str, depth: int = 0) -> requests.Response:
+    """
+    Make HTTP request with security validation.
+    
+    Features:
+    - Manual redirect handling (validates each hop)
+    - Redirect depth limit
+    - Timeout enforcement
+    - Streaming response
+    
+    Args:
+        url: URL to request
+        depth: Current redirect depth (internal)
+        
+    Returns:
+        Response object
+        
+    Raises:
+        ValueError: If URL validation fails or too many redirects
+        requests.RequestException: If request fails
+    """
+    # Check redirect depth
     if depth > config.max_redirects:
         raise ValueError(f"Too many redirects (max {config.max_redirects})")
+    
+    # Validate URL
     if not validate_url(url):
         raise ValueError(f"URL validation failed: {url}")
+    
+    # Set User-Agent to identify requests
     headers = {
         "User-Agent": "Bradley-AI-Guardian/1.0 (Deepfake Detection; +https://bradley.ai)"
     }
+    
+    # Make request with security settings
     resp = requests.get(
         url,
-        allow_redirects=False,
+        allow_redirects=False,  # Manual redirect handling
         timeout=config.request_timeout_seconds,
-        stream=True,
+        stream=True,  # Memory efficient
         headers=headers
     )
+    
+    # Handle redirects manually (validates each hop)
     if resp.is_redirect:
         location = resp.headers.get("Location")
         if location:
             next_url = urllib.parse.urljoin(url, location)
             logger.info(f"Following redirect: {url} -> {next_url}")
             return safe_request(next_url, depth + 1)
+    
     resp.raise_for_status()
     return resp
 
 
 def safe_file_path(path: str, base_dir: Optional[str] = None) -> str:
+    """
+    Validate file path against directory traversal attacks.
+    
+    Args:
+        path: File path to validate
+        base_dir: Base directory to confine to (default: current working directory)
+        
+    Returns:
+        Validated real path
+        
+    Raises:
+        ValueError: If path traversal detected
+    """
     if base_dir is None:
         base_dir = os.path.realpath(os.getcwd())
     else:
         base_dir = os.path.realpath(base_dir)
+    
     real_path = os.path.realpath(path)
+    
+    # Ensure path is within base directory
     if not real_path.startswith(base_dir + os.sep):
         raise ValueError(f"Path traversal attempt detected: {path}")
+    
     return real_path
 
 
 def validate_video_extension(path: str) -> bool:
+    """
+    Check if file has valid video extension.
+    
+    Args:
+        path: File path to check
+        
+    Returns:
+        True if valid video extension, False otherwise
+    """
     ext = os.path.splitext(path)[1].lower()
     return ext in config.supported_extensions
 
 
+# ============================================================================
+# VIDEO DOWNLOAD
+# ============================================================================
+
 def safe_video_download(url: str) -> str:
+    """
+    Download video from URL with security checks.
+    
+    Features:
+    - Size limit enforcement
+    - Progress logging
+    - Secure temp file creation
+    - Automatic cleanup on error
+    
+    Args:
+        url: Video URL (must pass validation)
+        
+    Returns:
+        Path to downloaded temp file
+        
+    Raises:
+        ValueError: If file too large or download fails
+        requests.RequestException: If request fails
+    """
     logger.info(f"Starting video download: {url}")
     resp = safe_request(url)
+    
     total = 0
     fd, path = tempfile.mkstemp(suffix=".mp4")
-    os.close(fd)
+    os.close(fd)  # Close file descriptor immediately
+    
     try:
         with open(path, "wb") as f:
             for chunk in resp.iter_content(chunk_size=8192):
                 if not chunk:
                     continue
+                
                 total += len(chunk)
+                
+                # Enforce size limit
                 if total > config.max_file_size_bytes:
                     raise ValueError(
                         f"File too large: {total} bytes "
                         f"(max {config.max_file_size_mb} MB)"
                     )
+                
                 f.write(chunk)
+                
+                # Log progress every 10 MB
                 if total % (10 * 1024 * 1024) < 8192:
                     mb_downloaded = total / (1024 * 1024)
                     logger.info(f"Downloaded {mb_downloaded:.1f} MB...")
+        
         mb_total = total / (1024 * 1024)
         logger.info(f"Download complete: {mb_total:.1f} MB")
         return path
+        
     except (IOError, ValueError, requests.RequestException) as e:
         logger.error(f"Download failed: {e}")
+        # Clean up temp file on error
         if os.path.exists(path):
             try:
                 os.unlink(path)
@@ -301,14 +495,32 @@ def safe_video_download(url: str) -> str:
         raise
 
 
+# ============================================================================
+# DEEPFAKE DETECTION
+# ============================================================================
+
 _detector = None
 _detector_lock = Lock()
 
 
 def get_video_detector():
+    """
+    Get video deepfake detector (lazy-loaded singleton).
+    
+    Thread-safe using double-checked locking pattern.
+    
+    Returns:
+        Transformers pipeline for video classification
+        
+    Raises:
+        RuntimeError: If model fails to load
+    """
     global _detector
+    
+    # First check (fast path after initialization)
     if _detector is None:
         with _detector_lock:
+            # Second check (ensure only one thread initializes)
             if _detector is None:
                 try:
                     logger.info(f"Loading model: {config.model_name}...")
@@ -320,30 +532,59 @@ def get_video_detector():
                     )
                     device = "GPU" if torch.cuda.is_available() else "CPU"
                     logger.info(f"Model loaded successfully on {device}")
+                    
                 except Exception as e:
                     logger.critical(f"Failed to load model: {e}", exc_info=True)
                     raise RuntimeError(f"Model initialization failed: {e}")
+    
     return _detector
 
 
 def analyze_video(video_path: str, threshold: Optional[float] = None) -> Dict[str, Any]:
+    """
+    Analyze video for deepfake detection.
+    
+    Args:
+        video_path: Path to video file
+        threshold: Detection threshold (default from config)
+        
+    Returns:
+        Dictionary with detection results:
+        {
+            "is_deepfake": bool or None,  # None if error
+            "confidence": float,
+            "threshold": float,
+            "label": str,
+            "details": list,
+            "status": str  # "success" or "error"
+        }
+    """
     if threshold is None:
         threshold = config.deepfake_threshold
+    
     detector = get_video_detector()
+    
     try:
         logger.info(f"Analyzing video: {video_path}")
         results = detector(video_path)
+        
+        # Validate results format
         if not isinstance(results, list) or not results:
             raise ValueError("Invalid model output format")
+        
+        # Extract fake score (max score with FAKE label)
         fake_score = max(
             (r["score"] for r in results if r.get("label") == "FAKE"),
             default=0.0
         )
+        
         is_fake = fake_score > threshold
+        
         logger.info(
             f"Analysis complete: {is_fake} "
             f"(confidence: {fake_score:.3f}, threshold: {threshold})"
         )
+        
         return {
             "is_deepfake": is_fake,
             "confidence": round(fake_score, 3),
@@ -352,6 +593,7 @@ def analyze_video(video_path: str, threshold: Optional[float] = None) -> Dict[st
             "details": results,
             "status": "success"
         }
+        
     except ValueError as e:
         logger.error(f"Analysis validation error: {e}")
         return {
@@ -361,6 +603,7 @@ def analyze_video(video_path: str, threshold: Optional[float] = None) -> Dict[st
             "error": str(e),
             "status": "error"
         }
+        
     except Exception as e:
         logger.error(f"Analysis failed: {e}", exc_info=True)
         return {
@@ -377,9 +620,30 @@ def detect_video_deepfake(
     user_id: str = "default",
     threshold: Optional[float] = None
 ) -> Dict[str, Any]:
+    """
+    Detect deepfakes in video from URL or local path.
+    
+    Main entry point for deepfake detection. Handles:
+    - Rate limiting
+    - URL downloads
+    - Local file validation
+    - Video analysis
+    - Metrics tracking
+    - Cleanup
+    
+    Args:
+        url_or_path: Video URL (https://) or local file path
+        user_id: Identifier for rate limiting (default: "default")
+        threshold: Detection threshold (default from config)
+        
+    Returns:
+        Dictionary with detection results and metadata
+    """
     start_time = time()
     temp_path = None
+    
     try:
+        # Rate limiting check
         if not _rate_limiter.allow_request(user_id):
             remaining = _rate_limiter.get_remaining(user_id)
             error_msg = (
@@ -389,12 +653,14 @@ def detect_video_deepfake(
                 f"Try again in {config.rate_limit_window_seconds} seconds."
             )
             logger.warning(f"Rate limited: {user_id}")
+            
             latency = (time() - start_time) * 1000
             _metrics.record_request(
                 success=False,
                 latency_ms=latency,
                 rate_limited=True
             )
+            
             return {
                 "error": error_msg,
                 "is_deepfake": None,
@@ -402,30 +668,50 @@ def detect_video_deepfake(
                 "status": "rate_limited",
                 "remaining_requests": remaining
             }
+        
+        # Determine input type and validate
         if url_or_path.startswith("https://"):
+            # Download from URL
             temp_path = safe_video_download(url_or_path)
             video_path = temp_path
+            
         elif url_or_path.startswith("http://"):
+            # Reject HTTP (only HTTPS allowed)
             raise ValueError("HTTP not allowed. Please use HTTPS.")
+            
         else:
+            # Local file path
             video_path = safe_file_path(url_or_path)
+            
+            # Check file exists
             if not os.path.isfile(video_path):
                 raise ValueError(f"File not found: {url_or_path}")
+            
+            # Validate file extension
             if not validate_video_extension(video_path):
                 supported = ", ".join(config.supported_extensions)
                 raise ValueError(
                     f"Unsupported file format. "
                     f"Supported formats: {supported}"
                 )
+        
+        # Analyze video
         result = analyze_video(video_path, threshold)
+        
+        # Track metrics
         latency = (time() - start_time) * 1000
         _metrics.record_request(
             success=(result["status"] == "success"),
             latency_ms=latency
         )
+        
+        # Add latency to result
         result["latency_ms"] = round(latency, 2)
+        
         return result
+        
     except ValueError as e:
+        # Validation errors (user error, not system error)
         logger.error(f"Validation error: {e}")
         latency = (time() - start_time) * 1000
         _metrics.record_request(
@@ -433,6 +719,7 @@ def detect_video_deepfake(
             latency_ms=latency,
             validation_error=True
         )
+        
         return {
             "error": str(e),
             "is_deepfake": None,
@@ -440,13 +727,16 @@ def detect_video_deepfake(
             "status": "validation_error",
             "latency_ms": round(latency, 2)
         }
+        
     except Exception as e:
+        # System errors
         logger.critical(f"Unexpected error: {e}", exc_info=True)
         latency = (time() - start_time) * 1000
         _metrics.record_request(
             success=False,
             latency_ms=latency
         )
+        
         return {
             "error": "Processing failed. Please try again.",
             "is_deepfake": None,
@@ -454,7 +744,9 @@ def detect_video_deepfake(
             "status": "processing_error",
             "latency_ms": round(latency, 2)
         }
+        
     finally:
+        # Cleanup temp file
         if temp_path and os.path.exists(temp_path):
             try:
                 os.unlink(temp_path)
@@ -463,15 +755,32 @@ def detect_video_deepfake(
                 logger.warning(f"Failed to clean up temp file: {e}")
 
 
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
+
 def get_metrics() -> Dict[str, Any]:
+    """
+    Get current system metrics.
+    
+    Returns:
+        Dictionary with metrics statistics
+    """
     return _metrics.get_stats()
 
 
 def reset_metrics():
+    """Reset metrics (useful for testing)."""
     _metrics.reset()
 
 
 def get_config() -> Dict[str, Any]:
+    """
+    Get current configuration.
+    
+    Returns:
+        Dictionary with current config values
+    """
     return {
         "allowed_domains": config.allowed_domains,
         "allowed_schemes": config.allowed_schemes,
@@ -486,13 +795,304 @@ def get_config() -> Dict[str, Any]:
     }
 
 
+# ============================================================================
+# EXAMPLE USAGE
+# ============================================================================
+
 if __name__ == "__main__":
+    # Example: Detect deepfake in video from URL
     result = detect_video_deepfake(
         "https://huggingface.co/path/to/video.mp4",
         user_id="test_user"
     )
     print(f"Detection result: {result}")
+    
+    # Example: Get metrics
     metrics = get_metrics()
     print(f"System metrics: {metrics}")
+    
+    # Example: Get config
     config_info = get_config()
     print(f"Configuration: {config_info}")
+
+INSTRUCTIONS FOR REPLIT:
+markdown# Bradley Video Detection - Production Update
+
+## Overview
+Update the deepfake video detection module with production-ready code including:
+- Rate limiting (10 requests/min per user)
+- Monitoring/metrics tracking
+- Improved error handling
+- Security enhancements
+- Configuration management
+
+## Files to Update
+
+### 1. Replace existing video detection code
+**File**: `src/detection/video.py` (or wherever current code lives)
+**Action**: Replace entire file with the new code provided above
+
+### 2. Update requirements (if needed)
+**File**: `requirements.txt`
+**Add** (if not already present):
+```
+torch>=2.0.0
+transformers>=4.30.0
+requests>=2.31.0
+```
+
+## Key Changes
+
+### Security Improvements
+- Added file extension validation (prevents non-video uploads)
+- Added User-Agent header (prevents rate limiting from HuggingFace)
+- Improved DNS timeout handling
+- More specific exception handling
+
+### Rate Limiting
+- 10 requests per 60 seconds per user_id
+- Thread-safe implementation
+- Returns clear error messages when limited
+- Tracks remaining requests
+
+### Monitoring
+- Request count tracking (total, successful, failed, rate limited)
+- Latency measurement (average response time)
+- Success rate calculation
+- Uptime tracking
+
+### Error Handling
+- `is_deepfake: None` (instead of False) when errors occur
+- Added `status` field: "success", "error", "rate_limited", "validation_error"
+- Clear error messages for users
+- Detailed logging for debugging
+
+### Configuration
+- Environment variable support for all settings
+- Configurable thresholds, limits, timeouts
+- Easy deployment without code changes
+
+## Environment Variables (Optional)
+
+Set these to customize behavior:
+```bash
+# Security
+ALLOWED_DOMAINS="huggingface.co,cdn.huggingface.co"
+ALLOWED_SCHEMES="https"
+MAX_REDIRECTS=5
+MAX_FILE_SIZE_MB=200
+REQUEST_TIMEOUT=10
+
+# Detection
+DEEPFAKE_THRESHOLD=0.75
+
+# Rate Limiting
+RATE_LIMIT_REQUESTS=10
+RATE_LIMIT_WINDOW=60
+```
+
+## API Usage Examples
+
+### Basic Detection
+```python
+from src.detection.video import detect_video_deepfake
+
+# Detect from URL
+result = detect_video_deepfake(
+    "https://huggingface.co/path/to/video.mp4",
+    user_id="user123"
+)
+
+print(result)
+# {
+#     "is_deepfake": True,
+#     "confidence": 0.892,
+#     "threshold": 0.75,
+#     "label": "FAKE",
+#     "status": "success",
+#     "latency_ms": 3421.5
+# }
+```
+
+### Local File
+```python
+result = detect_video_deepfake(
+    "/path/to/local/video.mp4",
+    user_id="user123"
+)
+```
+
+### Custom Threshold
+```python
+result = detect_video_deepfake(
+    "https://example.com/video.mp4",
+    user_id="user123",
+    threshold=0.85  # More strict
+)
+```
+
+### Get Metrics
+```python
+from src.detection.video import get_metrics
+
+metrics = get_metrics()
+print(metrics)
+# {
+#     "total_requests": 150,
+#     "successful": 142,
+#     "failed": 5,
+#     "rate_limited": 3,
+#     "success_rate": 0.947,
+#     "avg_latency_ms": 2341.23,
+#     "uptime_seconds": 3600
+# }
+```
+
+### Get Config
+```python
+from src.detection.video import get_config
+
+config = get_config()
+print(config)
+```
+
+## Testing
+
+### Test Rate Limiting
+```python
+# Make 11 requests rapidly (should rate limit on 11th)
+for i in range(11):
+    result = detect_video_deepfake(test_url, user_id="test")
+    print(f"Request {i+1}: {result.get('status')}")
+```
+
+### Test Error Handling
+```python
+# Invalid URL
+result = detect_video_deepfake("http://bad.com/video.mp4")
+assert result["status"] == "validation_error"
+
+# Invalid file
+result = detect_video_deepfake("/path/to/image.jpg")
+assert result["status"] == "validation_error"
+assert "Unsupported file format" in result["error"]
+```
+
+### Test Metrics
+```python
+from src.detection.video import get_metrics, reset_metrics
+
+reset_metrics()  # Start fresh
+detect_video_deepfake(test_url, user_id="test1")
+detect_video_deepfake(test_url, user_id="test2")
+
+metrics = get_metrics()
+assert metrics["total_requests"] == 2
+```
+
+## Breaking Changes
+
+### Response Format
+Old format returned `is_deepfake: False` on errors.
+New format returns `is_deepfake: None` and adds `status` field.
+
+**Migration**:
+```python
+# OLD CODE
+if result["is_deepfake"]:
+    # handle deepfake
+    
+# NEW CODE (check status first)
+if result["status"] == "success":
+    if result["is_deepfake"]:
+        # handle deepfake
+    elif result["is_deepfake"] is False:
+        # handle real video
+else:
+    # handle error
+    print(result["error"])
+```
+
+### Function Signature
+Added optional `user_id` and `threshold` parameters:
+```python
+# Old
+detect_video_deepfake(url_or_path)
+
+# New (backward compatible)
+detect_video_deepfake(url_or_path, user_id="default", threshold=None)
+```
+
+## Deployment Checklist
+
+- [ ] Replace video detection code
+- [ ] Update requirements.txt (if needed)
+- [ ] Set environment variables (if customizing)
+- [ ] Test rate limiting works
+- [ ] Test error handling works
+- [ ] Test metrics endpoint
+- [ ] Update API documentation
+- [ ] Monitor logs for issues
+
+## Monitoring
+
+After deployment, monitor:
+- Request counts (should see tracking in logs)
+- Error rates (check `failed` in metrics)
+- Rate limit hits (check `rate_limited` in metrics)
+- Latency (check `avg_latency_ms` in metrics)
+
+## Rollback Plan
+
+If issues occur, revert to old code:
+```bash
+git checkout HEAD~1 src/detection/video.py
+```
+
+## Support
+
+Questions or issues? Check logs first:
+```python
+import logging
+logging.basicConfig(level=logging.DEBUG)
+```
+
+Look for:
+- "Rate limit exceeded" (user hitting limits)
+- "Validation error" (bad input)
+- "Download failed" (network issues)
+- "Analysis failed" (model errors)
+```
+
+---
+
+## **WHAT CHANGED (Summary for Replit):**
+```
+CRITICAL FIXES:
+✅ Rate limiting (prevents abuse, 10 req/min per user)
+✅ Error responses (is_deepfake: None on errors, not False)
+✅ File validation (only accepts video formats)
+✅ Status field (success/error/rate_limited/validation_error)
+
+SECURITY IMPROVEMENTS:
+✅ DNS timeout handling (prevents hangs)
+✅ User-Agent header (prevents HuggingFace rate limits)
+✅ More specific exceptions (better error handling)
+✅ File extension validation (prevents non-videos)
+
+NEW FEATURES:
+✅ Metrics tracking (requests, latency, success rate)
+✅ Configuration management (environment variables)
+✅ Progress logging (large downloads)
+✅ Latency tracking (performance monitoring)
+
+CODE QUALITY:
+✅ Better documentation (docstrings everywhere)
+✅ Cleaner structure (organized sections)
+✅ Type hints (better IDE support)
+✅ Logging improvements (structured, informative)
+
+BACKWARD COMPATIBILITY:
+✅ Function signature backward compatible (optional params)
+✅ Response format includes old fields (but adds new ones)
+✅ Migration path documented (for breaking changes)
