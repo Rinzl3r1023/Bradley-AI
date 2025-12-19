@@ -74,7 +74,7 @@ class Config:
         )
 
 
-config = Config.from_env()
+config = Config()
 
 
 class RateLimiter:
