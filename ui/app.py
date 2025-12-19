@@ -208,16 +208,38 @@ db.init_app(app)
 
 from detection.video_detector import detect_video_deepfake
 from detection.audio_detector import detect_audio_deepfake
-from relay.node import grid_node, get_registry_stats, add_lounge_node
+
+class GridNodeStub:
+    node_id = "standalone-node-001"
+    def get_status(self):
+        return {"status": "standalone", "node_id": self.node_id}
+
+grid_node = GridNodeStub()
+
+def get_registry_stats():
+    return {"total_nodes": 1, "active_nodes": 1}
+
+def add_lounge_node(endpoint):
+    return "stub-node-id"
 
 class SwarmStub:
     """Stub for disabled BradleySwarm - agents module archived for MVP"""
     scans_completed = 0
     threats_detected = 0
     def run_sample_threat(self):
-        return {"status": "demo", "message": "Swarm disabled for MVP", "is_threat": False, "confidence": 0.0}
+        return {
+            "status": "demo", 
+            "message": "Swarm disabled for MVP",
+            "video_result": {"is_deepfake": False, "confidence": 0.0},
+            "audio_result": {"is_deepfake": False, "confidence": 0.0}
+        }
     def analyze_remote_media(self, url, media_type):
-        return {"status": "disabled", "message": "Use /detect_video_deepfake or /detect_audio_deepfake endpoints", "is_deepfake": False, "confidence": 0.0}
+        return {
+            "status": "disabled", 
+            "message": "Use /detect_video_deepfake or /detect_audio_deepfake endpoints", 
+            "is_deepfake": False, 
+            "confidence": 0.0
+        }
 
 swarm = SwarmStub()
 
