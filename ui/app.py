@@ -206,12 +206,20 @@ def validate_media_url(url):
 
 db.init_app(app)
 
-from agents.swarm import BradleySwarm
 from detection.video_detector import detect_video_deepfake
 from detection.audio_detector import detect_audio_deepfake
 from relay.node import grid_node, get_registry_stats, add_lounge_node
 
-swarm = BradleySwarm()
+class SwarmStub:
+    """Stub for disabled BradleySwarm - agents module archived for MVP"""
+    scans_completed = 0
+    threats_detected = 0
+    def run_sample_threat(self):
+        return {"status": "demo", "message": "Swarm disabled for MVP", "is_threat": False, "confidence": 0.0}
+    def analyze_remote_media(self, url, media_type):
+        return {"status": "disabled", "message": "Use /detect_video_deepfake or /detect_audio_deepfake endpoints", "is_deepfake": False, "confidence": 0.0}
+
+swarm = SwarmStub()
 
 class ThreatDetection(db.Model):
     __tablename__ = 'threat_detections'
