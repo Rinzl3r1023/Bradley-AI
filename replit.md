@@ -18,7 +18,9 @@ Bradley-AI/
 │   ├── video_detector.py  # Deepfake video detection (PyTorch CNN)
 │   └── audio_detector.py  # Voice clone detection (spectral analysis)
 ├── relay/
-│   └── node.py            # Grid relay node for threat broadcasting
+│   └── node.py            # Grid relay node STUB (P2P archived)
+├── archive/
+│   └── node-network/      # Archived P2P node network (Q3 2026+)
 ├── ui/
 │   ├── app.py             # Flask web application
 │   ├── templates/
@@ -85,6 +87,7 @@ The Flask server runs on port 5000 via the "Bradley AI" workflow.
 - [ ] Chrome Web Store publication
 
 ## Recent Changes
+- **Dec 19, 2025:** Archived P2P node network to archive/node-network/ (restored Q3 2026+ after MVP validation)
 - **Dec 13, 2025:** Video detection v2.0: production-ready with rate limiting (10/min), metrics tracking, env config, A (96/100)
 - **Dec 13, 2025:** Security hardening A+ (98/100): rate limiting, admin auth, input validation, security headers
 - **Dec 13, 2025:** Firebase Firestore integration for pending node approval queue (wallet-based beta)
