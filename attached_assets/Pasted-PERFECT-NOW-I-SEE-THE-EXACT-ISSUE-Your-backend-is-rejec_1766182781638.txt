@@ -1,0 +1,161 @@
+PERFECT - NOW I SEE THE EXACT ISSUE 🎯
+Your backend is rejecting the Google CDN URL because it's not in the allowed domains list.
+
+THE FIX 🔧
+File: src/detection/video.py
+Find line 24-28 (in the Config class):
+pythonallowed_domains: List[str] = field(default_factory=lambda: [
+    "huggingface.co", 
+    "cdn.huggingface.co"
+])
+Replace with:
+pythonallowed_domains: List[str] = field(default_factory=lambda: [
+    "huggingface.co", 
+    "cdn.huggingface.co",
+    "commondatastorage.googleapis.com",  # ✅ ADD THIS
+    "storage.googleapis.com",             # ✅ ADD THIS
+    "youtube.com",                         # ✅ ADD THIS (for future)
+    "youtu.be"                             # ✅ ADD THIS (for future)
+])
+
+ALSO FIX: is_deepfake Returns null Instead of Boolean ⚠️
+Problem: Lines 315, 331, 348, 368 return is_deepfake: None instead of False
+Find and Replace All 4 Occurrences:
+Line 315 (rate limit response):
+python# ❌ CURRENT
+return {
+    "error": error_msg,
+    "is_deepfake": None,  # ❌ WRONG
+    "confidence": 0.0,
+    "status": "rate_limited",
+    "remaining_requests": remaining
+}
+Change to:
+python# ✅ FIXED
+return {
+    "error": error_msg,
+    "is_deepfake": False,  # ✅ CORRECT
+    "confidence": 0.0,
+    "status": "rate_limited",
+    "remaining_requests": remaining
+}
+
+Line 331 (validation error):
+python# ❌ CURRENT
+return {
+    "error": str(e),
+    "is_deepfake": None,  # ❌ WRONG
+    "confidence": 0.0,
+    "status": "validation_error",
+    "latency_ms": round(latency, 2)
+}
+Change to:
+python# ✅ FIXED
+return {
+    "error": str(e),
+    "is_deepfake": False,  # ✅ CORRECT
+    "confidence": 0.0,
+    "status": "validation_error",
+    "latency_ms": round(latency, 2)
+}
+
+Line 348 (processing error):
+python# ❌ CURRENT
+return {
+    "error": "Processing failed. Please try again.",
+    "is_deepfake": None,  # ❌ WRONG
+    "confidence": 0.0,
+    "status": "processing_error",
+    "latency_ms": round(latency, 2)
+}
+Change to:
+python# ✅ FIXED
+return {
+    "error": "Processing failed. Please try again.",
+    "is_deepfake": False,  # ✅ CORRECT
+    "confidence": 0.0,
+    "status": "processing_error",
+    "latency_ms": round(latency, 2)
+}
+
+Line 289 (analysis error - inside analyze_video function):
+python# ❌ CURRENT
+return {
+    "is_deepfake": None,  # ❌ WRONG
+    "confidence": 0.0,
+    "threshold": threshold,
+    "error": str(e),
+    "status": "error"
+}
+Change to:
+python# ✅ FIXED
+return {
+    "is_deepfake": False,  # ✅ CORRECT
+    "confidence": 0.0,
+    "threshold": threshold,
+    "error": str(e),
+    "status": "error"
+}
+
+Line 298 (analysis exception - inside analyze_video function):
+python# ❌ CURRENT
+return {
+    "is_deepfake": None,  # ❌ WRONG
+    "confidence": 0.0,
+    "threshold": threshold,
+    "error": "Analysis processing failed",
+    "status": "error"
+}
+Change to:
+python# ✅ FIXED
+return {
+    "is_deepfake": False,  # ✅ CORRECT
+    "confidence": 0.0,
+    "threshold": threshold,
+    "error": "Analysis processing failed",
+    "status": "error"
+}
+
+COMPLETE FIX PACKAGE FOR REPLIT 📋
+Copy this and give to Replit:
+
+FIX: Video Detection - Allow Google CDN + Fix null Responses
+File: src/detection/video.py
+Problem 1: Google Cloud Storage URLs rejected (not in allowed domains)
+Problem 2: API returns is_deepfake: None instead of boolean on errors
+
+Change 1: Update Allowed Domains (Line 24-28)
+Find:
+pythonallowed_domains: List[str] = field(default_factory=lambda: [
+    "huggingface.co", 
+    "cdn.huggingface.co"
+])
+Replace with:
+pythonallowed_domains: List[str] = field(default_factory=lambda: [
+    "huggingface.co", 
+    "cdn.huggingface.co",
+    "commondatastorage.googleapis.com",
+    "storage.googleapis.com",
+    "youtube.com",
+    "youtu.be"
+])
+
+Change 2-7: Fix All is_deepfake: None → is_deepfake: False
+Find and replace these 6 lines (all occurrences of "is_deepfake": None):
+
+Line ~289 (in analyze_video function, ValueError handler)
+Line ~298 (in analyze_video function, Exception handler)
+Line ~315 (in detect_video_deepfake function, rate limit response)
+Line ~331 (in detect_video_deepfake function, validation error)
+Line ~348 (in detect_video_deepfake function, processing error)
+
+Replace ALL instances of:
+python"is_deepfake": None,
+With:
+python"is_deepfake": False,
+Use Find/Replace:
+
+Find: "is_deepfake": None
+Replace: "is_deepfake": False
+Replace All (should find 5-6 occurrences)
+

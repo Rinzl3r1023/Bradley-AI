@@ -34,7 +34,11 @@ class Config:
     
     allowed_domains: List[str] = field(default_factory=lambda: [
         "huggingface.co", 
-        "cdn.huggingface.co"
+        "cdn.huggingface.co",
+        "commondatastorage.googleapis.com",
+        "storage.googleapis.com",
+        "youtube.com",
+        "youtu.be"
     ])
     allowed_schemes: List[str] = field(default_factory=lambda: ["https"])
     max_redirects: int = 5
@@ -355,7 +359,7 @@ def analyze_video(video_path: str, threshold: Optional[float] = None) -> Dict[st
     except ValueError as e:
         logger.error(f"Analysis validation error: {e}")
         return {
-            "is_deepfake": None,
+            "is_deepfake": False,
             "confidence": 0.0,
             "threshold": threshold,
             "error": str(e),
@@ -364,7 +368,7 @@ def analyze_video(video_path: str, threshold: Optional[float] = None) -> Dict[st
     except Exception as e:
         logger.error(f"Analysis failed: {e}", exc_info=True)
         return {
-            "is_deepfake": None,
+            "is_deepfake": False,
             "confidence": 0.0,
             "threshold": threshold,
             "error": "Analysis processing failed",
@@ -397,7 +401,7 @@ def detect_video_deepfake(
             )
             return {
                 "error": error_msg,
-                "is_deepfake": None,
+                "is_deepfake": False,
                 "confidence": 0.0,
                 "status": "rate_limited",
                 "remaining_requests": remaining
@@ -435,7 +439,7 @@ def detect_video_deepfake(
         )
         return {
             "error": str(e),
-            "is_deepfake": None,
+            "is_deepfake": False,
             "confidence": 0.0,
             "status": "validation_error",
             "latency_ms": round(latency, 2)
@@ -449,7 +453,7 @@ def detect_video_deepfake(
         )
         return {
             "error": "Processing failed. Please try again.",
-            "is_deepfake": None,
+            "is_deepfake": False,
             "confidence": 0.0,
             "status": "processing_error",
             "latency_ms": round(latency, 2)
