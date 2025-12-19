@@ -1,0 +1,73 @@
+TASK: Disable Relay Folder to Fix Processing ErrorsProblem: The relay/ folder (containing node.py and __init__.py) may be auto-loading on startup and causing conflicts, since we're not using the node network for MVP. This could be causing the "Processing failed" errors.Solution: Rename the folder so Python doesn't try to import it.STEP 1: Rename the Relay FolderFind the folder named:
+
+relay/ OR
+Relay/
+Rename it to:
+relay_DISABLEDHow to do this:
+
+Right-click the folder → Rename
+Or use command in Shell: mv relay relay_DISABLED
+STEP 2: Verify Folder is RenamedCheck that these exist:
+
+✅ relay_DISABLED/node.py
+✅ relay_DISABLED/__init__.py
+Check that these DO NOT exist:
+
+❌ relay/node.py
+❌ relay/__init__.py
+STEP 3: Delete Python Cache FilesClear any cached imports from relay folder:Run these commands in Shell:bashrm -rf __pycache__
+rm -rf relay_DISABLED/__pycache__
+rm -rf detection/__pycache__
+rm -rf agents_DISABLED/__pycache__
+find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/nullThis removes all compiled Python cache files that might still reference the old relay folder.STEP 4: Verify app.py Has StubsMake sure app.py still has the stub code (should be around line 279-295).Look for this section:python# Agents module disabled for MVP - using direct detection functions instead
+# from relay.node import grid_node, get_registry_stats, add_lounge_node
+
+# Create minimal stubs for backward compatibility
+class GridNodeStub:
+    node_id = "standalone-node-001"
+    def get_status(self):
+        return {"status": "standalone", "node_id": self.node_id}
+
+grid_node = GridNodeStub()
+
+def get_registry_stats():
+    return {"total_nodes": 1, "active_nodes": 1}
+
+def add_lounge_node(endpoint):
+    return "stub-node-id"If this code exists ✅ → Perfect, continue to Step 5If this code is missing ❌ → Add it back to app.py around line 279 (before the SwarmStub class)STEP 5: Restart the ServerStop and restart the Replit server:
+
+Click "Stop" button (or Ctrl+C in console)
+Wait for complete shutdown (all processes stopped)
+Click "Run" button
+Wait for startup messages:
+
+"Bradley AI online."
+"Guardian program activated."
+"=== BRADLEY AI GUARDIAN READY ==="
+
+
+STEP 6: Verify No ErrorsWatch the console output during restart.Should see:
+
+✅ "Bradley AI online."
+✅ "=== BRADLEY AI CONFIGURATION ==="
+✅ "=== BRADLEY AI GUARDIAN READY ==="
+✅ No import errors
+✅ No critical errors
+Should NOT see:
+
+❌ ImportError: cannot import name ... from 'relay'
+❌ ModuleNotFoundError: No module named 'relay'
+❌ Any errors mentioning "relay" or "node"
+WHY THIS FIXES IT:The relay folder was:
+
+Potentially auto-loading on server startup
+Trying to establish node connections that don't exist
+May have been importing from agents folder (circular dependency)
+Consuming resources needed for video detection
+By renaming to relay_DISABLED, Python will no longer try to import those modules. The stub implementations in app.py provide the minimal compatibility needed for existing routes.WHAT HAPPENS NEXT:After restart:
+
+Video detection API should process requests properly
+No more relay/node import conflicts
+Resources freed for actual video processing
+Test should succeed (or reveal if model loading is the remaining issue)
+END OF INSTRUCTIONS
