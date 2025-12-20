@@ -204,8 +204,7 @@ class ScanIndicator {
   }
   createOverlay() {
     this.overlay = document.createElement('div');
-    this.overlay.className = 'bradley-indicator';
-    this.overlay.style.cssText = 'position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.85);color:white;padding:8px 12px;border-radius:6px;font-size:12px;z-index:999999;display:flex;gap:6px;pointer-events:none;transition:opacity 0.3s';
+    this.overlay.className = 'bradley-indicator bradley-scanning';
     const parent = this.el.parentElement;
     if (parent && getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
     parent.appendChild(this.overlay);

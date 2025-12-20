@@ -1,0 +1,149 @@
+INSTRUCTIONS FOR REPLIT - FIX BRADLEY EXTENSION UI 🔧
+Copy everything below and give to Replit:
+
+TASK: Fix Bradley Extension - Badge Position, Colors, and Stats Tracking
+Current Status:
+
+✅ API working perfectly (mock mode returning success)
+⚠️ Badge appearing in wrong position (corner of page, not corner of video)
+⚠️ Badge showing blue/white colors instead of green for "Verified"
+⚠️ Extension popup showing 0 scanned (stats not tracking)
+
+Goal: Fix badge positioning, colors, and stat counting.
+
+DIAGNOSTIC FIRST - Run This in Browser Console
+Before making changes, please run this diagnostic script in the browser console (F12) on the test page and paste the output:
+javascript// Check if indicators exist on page
+console.log('Indicators found:', document.querySelectorAll('[class*="bradley"]').length);
+
+// Check indicator details
+const indicator = document.querySelector('[class*="bradley"]');
+if (indicator) {
+  console.log('Indicator parent:', indicator.parentElement.tagName);
+  console.log('Indicator position:', window.getComputedStyle(indicator).position);
+  console.log('Indicator top:', window.getComputedStyle(indicator).top);
+  console.log('Indicator right:', window.getComputedStyle(indicator).right);
+  console.log('Indicator background:', window.getComputedStyle(indicator).background);
+  console.log('Indicator text:', indicator.textContent);
+}
+
+// Check for Bradley console messages
+console.log('Look for [BRADLEY] messages above');
+Paste the output from this diagnostic so we can see exactly what's happening.
+
+LIKELY ISSUES TO CHECK
+Issue #1: Badge Position
+File: content.js
+Check the addIndicator function (look for where the badge is created and positioned).
+Common problem: Badge is appended to document.body instead of the video element.
+Should look like:
+javascriptfunction addIndicator(video) {
+  const indicator = document.createElement('div');
+  indicator.className = 'bradley-deepfake-indicator';
+  
+  // Position relative to video
+  video.style.position = 'relative';  // ← Video becomes positioning parent
+  indicator.style.position = 'absolute';
+  indicator.style.top = '10px';
+  indicator.style.right = '10px';
+  indicator.style.zIndex = '999999';
+  
+  // Initial "Scanning" state
+  indicator.textContent = '⟐ Scanning...';
+  indicator.style.background = 'linear-gradient(135deg, #6366f1, #4f46e5)';
+  // ... other styles ...
+  
+  video.appendChild(indicator);  // ← Append to VIDEO, not document.body
+  return indicator;
+}
+If it says document.body.appendChild(indicator), change it to video.appendChild(indicator)
+
+Issue #2: Badge Colors
+File: content.js
+Check where the badge updates after API response (look for where it changes from "Scanning" to "Verified").
+Should look like:
+javascript// After API response
+if (!result.is_deepfake) {
+  indicator.textContent = '✓ Verified';
+  // Change to GREEN gradient
+  indicator.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+  indicator.style.borderColor = '#059669';
+  indicator.style.color = '#ffffff';
+} else {
+  indicator.textContent = '⚠ Threat Detected';
+  // Change to RED gradient
+  indicator.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+  indicator.style.borderColor = '#dc2626';
+  indicator.style.color = '#ffffff';
+}
+
+// Fade out after 3 seconds
+setTimeout(() => {
+  indicator.style.opacity = '0';
+  setTimeout(() => indicator.remove(), 500);
+}, 3000);
+If the green gradient line is missing or different, that's why it stays blue.
+
+Issue #3: Stats Not Counting
+File: content.js
+Check if message is being sent to background script after scan completes.
+Should have (after API response):
+javascript// Send message to background to update stats
+chrome.runtime.sendMessage({
+  type: 'SCAN_COMPLETE',
+  isThreat: result.is_deepfake,
+  confidence: result.confidence,
+  url: video.src
+});
+File: background.js
+Check if stats are being tracked:
+javascriptlet stats = {
+  scanned: 0,
+  threats: 0
+};
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'SCAN_COMPLETE') {
+    stats.scanned++;
+    if (message.isThreat) {
+      stats.threats++;
+    }
+    // Save to storage
+    chrome.storage.local.set({ stats });
+    console.log('[BRADLEY] Stats updated:', stats);
+  }
+  
+  if (message.type === 'GET_STATS') {
+    sendResponse(stats);
+  }
+});
+File: popup.js
+Check if popup is requesting stats:
+javascript// Load stats when popup opens
+chrome.runtime.sendMessage({type: 'GET_STATS'}, (response) => {
+  if (response) {
+    document.getElementById('scanned-count').textContent = response.scanned;
+    document.getElementById('threats-count').textContent = response.threats;
+  }
+});
+
+WHAT TO DO
+
+Run the diagnostic script in browser console and paste output
+Check the three issues above in content.js, background.js, and popup.js
+Make necessary fixes based on what's missing or wrong
+Reload the extension in chrome://extensions/ (click reload ↻)
+Refresh the test page and test again
+
+
+EXPECTED RESULT AFTER FIXES
+
+✅ Badge appears in top-right corner of each video element (not page corner)
+✅ Badge shows blue "⟐ Scanning..." initially
+✅ Badge changes to green "✓ Verified" after 2-3 seconds
+✅ Badge fades away after 3 more seconds
+✅ Extension popup shows "Media Scanned: 2" (or number of videos on page)
+✅ Console shows [BRADLEY] messages with no errors
+
+
+END OF INSTRUCTIONS
