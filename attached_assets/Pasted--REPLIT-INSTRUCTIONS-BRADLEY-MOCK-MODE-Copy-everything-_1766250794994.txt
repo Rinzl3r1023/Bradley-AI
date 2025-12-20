@@ -1,0 +1,122 @@
+# REPLIT INSTRUCTIONS - BRADLEY MOCK MODE 📦
+
+**Copy everything below and give to Replit**:
+
+-----
+
+## **TASK: Add Mock Mode to video_detector.py for Testing**
+
+**File**: `src/detection/video_detector.py`
+
+**Problem**: Real deepfake detection model requires GPU and 8GB+ RAM which Replit’s free tier doesn’t provide. The model fails to load, causing “Processing failed” errors with ~120ms latency.
+
+**Solution**: Add mock mode that skips model loading and returns realistic fake “safe” results, allowing full extension testing without needing a GPU server.
+
+-----
+
+### **LOCATE: The `analyze_video` function** (around line 327)
+
+**Current code starts like this**:
+
+```python
+def analyze_video(video_path: str, threshold: Optional[float] = None) -> Dict[str, Any]:
+    if threshold is None:
+        threshold = config.deepfake_threshold
+    detector = get_video_detector()
+    try:
+        logger.info(f"Analyzing video: {video_path}")
+        results = detector(video_path)
+```
+
+-----
+
+### **ADD THIS CODE: At the very top of the function** (immediately after `def analyze_video`):
+
+```python
+def analyze_video(video_path: str, threshold: Optional[float] = None) -> Dict[str, Any]:
+    # ========================================
+    # 🔧 MOCK MODE - Real model requires GPU
+    # ========================================
+    import random
+    logger.info(f"🔧 MOCK MODE: Returning safe result for {video_path}")
+    
+    # Generate random confidence between 5-25% (looks realistic)
+    fake_confidence = random.uniform(0.05, 0.25)
+    
+    return {
+        "is_deepfake": False,
+        "confidence": round(fake_confidence, 3),
+        "threshold": threshold or config.deepfake_threshold,
+        "label": "REAL",
+        "details": [
+            {"label": "REAL", "score": round(1 - fake_confidence, 3)},
+            {"label": "FAKE", "score": round(fake_confidence, 3)}
+        ],
+        "status": "success",
+        "model": "mock-v1-gpu-unavailable"
+    }
+    # ========================================
+    # END MOCK MODE
+    # When deploying to GPU server, delete lines 329-347 above
+    # ========================================
+    
+    # Original code below (won't execute because of return statement above)
+    if threshold is None:
+        threshold = config.deepfake_threshold
+    detector = get_video_detector()
+    # ... rest of function continues unchanged
+```
+
+-----
+
+### **WHAT THIS DOES**:
+
+1. ✅ **Immediately returns a fake result** before trying to load the model
+1. ✅ **Skips GPU-dependent code** (no model loading, no video processing)
+1. ✅ **Returns realistic data** (random 5-25% confidence scores)
+1. ✅ **Status: “success”** (no errors, fast ~100ms response)
+1. ✅ **Allows extension testing** (Chrome extension will work perfectly with mock data)
+1. ✅ **Easy to remove later** (just delete the mock section when deploying to GPU server)
+
+-----
+
+### **AFTER MAKING THIS CHANGE**:
+
+1. **Save the file** (`src/detection/video_detector.py`)
+1. **Restart the server** (Stop → Run button)
+1. **Wait for startup** (~1 minute for server to fully initialize)
+1. **Server will now return successful responses** without needing GPU
+
+-----
+
+### **VERIFICATION**:
+
+The mock mode is working when:
+
+- API returns `status: "success"` instead of `status: "processing_error"`
+- Response time is ~100-200ms (fast, not timing out)
+- Confidence values vary randomly between 0.05-0.25 each request
+- Console shows: `🔧 MOCK MODE: Returning safe result for ...`
+
+-----
+
+### **NOTES**:
+
+- This is **temporary for testing only** - when deploying to a real GPU server, delete the mock section
+- The mock always returns `is_deepfake: false` (safe results) with realistic-looking confidence scores
+- The original detection code remains intact below the mock section (ready to use when GPU available)
+- This allows full end-to-end testing of the Chrome extension without needing expensive GPU infrastructure
+
+-----
+
+**END OF INSTRUCTIONS**
+
+-----
+
+## **AFTER REPLIT APPLIES THIS** ⏱️
+
+**I’ll test the API to confirm mock mode is working, then we test the extension.**
+
+**That’s it - just paste those instructions to Replit!** 🚀
+
+**See you tomorrow, Partner!** 🤜🏻🤛🏻​​​​​​​​​​​​​​​​
