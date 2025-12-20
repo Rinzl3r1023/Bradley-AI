@@ -122,8 +122,10 @@ class BradleyAPIClient {
 class MediaScanner {
   constructor() { this.apiClient = new BradleyAPIClient(); }
   scan() {
+    console.log('[BRADLEY] Scan triggered. Enabled:', state.isEnabled, 'Consent:', state.hasConsent);
     if (!state.isEnabled || !state.hasConsent) return;
     const medias = [...document.querySelectorAll('video, audio')];
+    console.log('[BRADLEY] Found media elements:', medias.length);
     medias.forEach(media => {
       if (media.dataset.bradleyScanned) return;
       const url = media.src || media.currentSrc;
@@ -203,17 +205,33 @@ class ScanIndicator {
     this.overlay.appendChild(i); this.overlay.appendChild(t);
   }
   createOverlay() {
+    console.log('[BRADLEY] Creating overlay for:', this.el.tagName, this.el.src?.substring(0, 50));
+    
     this.overlay = document.createElement('div');
     this.overlay.className = 'bradley-indicator bradley-scanning';
     
-    // Make the media element the positioning context
-    const computedPosition = getComputedStyle(this.el).position;
-    if (computedPosition === 'static') {
-      this.el.style.position = 'relative';
+    // Video/audio elements cannot have visible children - we need a wrapper
+    let container = this.el.parentElement;
+    
+    // If parent is body or has no positioning, create a wrapper
+    if (!container || container === document.body || container.tagName === 'HTML') {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'bradley-media-wrapper';
+      wrapper.style.cssText = 'position:relative;display:inline-block;';
+      this.el.parentNode.insertBefore(wrapper, this.el);
+      wrapper.appendChild(this.el);
+      container = wrapper;
+    } else {
+      // Ensure parent has relative positioning for absolute overlay
+      const computedPosition = getComputedStyle(container).position;
+      if (computedPosition === 'static') {
+        container.style.position = 'relative';
+      }
     }
     
-    // Append directly to the media element
-    this.el.appendChild(this.overlay);
+    // Append overlay to the container (not the video itself)
+    container.appendChild(this.overlay);
+    console.log('[BRADLEY] Overlay appended to:', container.tagName, container.className);
   }
   remove() {
     if (this.overlay) {

@@ -1,0 +1,143 @@
+INSTRUCTIONS FOR REPLIT - VERIFY content.js 🔧
+Copy this and give to Replit:
+
+URGENT: content.js Missing Overlay Creation
+Symptom:
+
+✅ Stats tracking works (popup shows 7 scanned)
+✅ API calls successful (stats incrementing)
+❌ NO visual badges appearing (0 overlays in DOM)
+❌ Console shows no [BRADLEY] messages from content.js
+
+Diagnosis: The content.js file is likely missing the overlay creation code.
+
+Verify content.js has this structure:
+javascript// Constants
+const API_URL = 'https://bradleyai.replit.app/detect_video_deepfake';
+
+console.log('[BRADLEY] Extension loaded'); // ← Should see this in console
+
+// Function to create visual overlay
+function createOverlay(videoElement) {
+  console.log('[BRADLEY] Creating overlay for video'); // ← Should see this
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'bradley-overlay bradley-scanning';
+  overlay.textContent = '⟐ Scanning...';
+  
+  // Style the overlay
+  overlay.style.cssText = `
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    z-index: 999999;
+    transition: opacity 0.3s ease;
+  `;
+  
+  // Make video the positioning parent
+  videoElement.style.position = 'relative';
+  
+  // Append to video
+  videoElement.appendChild(overlay);
+  
+  return overlay;
+}
+
+// Function to scan video
+async function scanVideo(videoElement) {
+  console.log('[BRADLEY] Scanning video:', videoElement.src);
+  
+  // Create overlay FIRST
+  const overlay = createOverlay(videoElement);
+  
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url_or_path: videoElement.src || videoElement.currentSrc
+      })
+    });
+    
+    const result = await response.json();
+    console.log('[BRADLEY] API Response:', result);
+    
+    // Update overlay based on result
+    if (!result.is_deepfake) {
+      overlay.className = 'bradley-overlay bradley-safe';
+      overlay.textContent = '✓ Verified';
+    } else {
+      overlay.className = 'bradley-overlay bradley-threat';
+      overlay.textContent = '⚠ Threat';
+    }
+    
+    // Send stats to background
+    chrome.runtime.sendMessage({
+      type: 'SCAN_COMPLETE',
+      isThreat: result.is_deepfake || false,
+      confidence: result.confidence || 0
+    });
+    
+    // Fade out after 3 seconds
+    setTimeout(() => {
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.remove(), 500);
+    }, 3000);
+    
+  } catch (error) {
+    console.error('[BRADLEY] Scan failed:', error);
+    overlay.textContent = '✗ Error';
+    overlay.className = 'bradley-overlay bradley-threat';
+    setTimeout(() => overlay.remove(), 2000);
+  }
+}
+
+// Find and scan all videos on page
+function scanAllVideos() {
+  const videos = document.querySelectorAll('video');
+  console.log('[BRADLEY] Found', videos.length, 'video elements');
+  
+  videos.forEach(video => {
+    if (video.src || video.currentSrc) {
+      scanVideo(video);
+    }
+  });
+}
+
+// Run when page loads
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', scanAllVideos);
+} else {
+  scanAllVideos();
+}
+
+// Watch for dynamically added videos
+const observer = new MutationObserver(() => {
+  scanAllVideos();
+});
+
+observer.observe(document.body, {
+  childList: true,
+  subtree: true
+});
+
+Key things to verify:
+
+✅ createOverlay() function exists and creates DOM elements
+✅ scanVideo() calls createOverlay() BEFORE API call
+✅ Console.log statements present (so we can debug)
+✅ Overlay appended to video: videoElement.appendChild(overlay)
+✅ CSS classes applied: bradley-overlay, bradley-scanning, bradley-safe
+
+
+What probably happened:
+When fixing the positioning issue, the overlay creation code may have been accidentally removed or commented out. The API calls and stats tracking still work, but the visual badges don't get created.
+
+Check if content.js has the overlay creation logic above. If missing, add it back.
+
+END OF INSTRUCTIONS
