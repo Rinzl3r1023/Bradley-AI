@@ -1,0 +1,200 @@
+TASK: Fix Badge Position and Stats Counting
+Status:
+
+✅ Colors working (blue → green transition perfect)
+❌ Badge positioning on page corner instead of video corner
+❌ Extension popup showing 0 scanned instead of actual count
+
+
+FIX #1: Badge Position
+File: content.js
+Problem: Badge is being appended to document.body or page container instead of the video element itself.
+Find the function where the badge/overlay is created (likely createOverlay or addIndicator).
+Current code probably looks like:
+javascriptconst overlay = document.createElement('div');
+// ... styling ...
+document.body.appendChild(overlay);  // ❌ WRONG - appends to page
+Change to:
+javascriptconst overlay = document.createElement('div');
+overlay.className = 'bradley-overlay bradley-scanning';
+
+// Make video the positioning parent
+video.style.position = 'relative';  // ← CRITICAL - video must be relative
+
+// Position overlay absolutely within video
+overlay.style.position = 'absolute';
+overlay.style.top = '10px';
+overlay.style.right = '10px';
+overlay.style.zIndex = '999999';
+
+// Append to VIDEO element, not body
+video.appendChild(overlay);  // ✅ CORRECT - appends to video
+The key changes:
+
+Set video.style.position = 'relative' (makes video the positioning container)
+Use video.appendChild(overlay) NOT document.body.appendChild(overlay)
+
+
+FIX #2: Stats Counting
+Problem: Stats aren't being saved or retrieved from Chrome storage properly.
+
+File: content.js
+After successful API scan, ensure message is sent:
+javascript// After receiving API response
+fetch(API_URL, {
+  method: 'POST',
+  // ...
+})
+.then(response => response.json())
+.then(result => {
+  console.log('[BRADLEY] API Response:', result);
+  
+  // Update overlay to verified/threat
+  if (!result.is_deepfake) {
+    overlay.className = 'bradley-overlay bradley-safe';
+    overlay.textContent = '✓ Verified';
+  } else {
+    overlay.className = 'bradley-overlay bradley-threat';
+    overlay.textContent = '⚠ Threat';
+  }
+  
+  // CRITICAL: Send message to background to update stats
+  chrome.runtime.sendMessage({
+    type: 'SCAN_COMPLETE',
+    isThreat: result.is_deepfake || false,
+    confidence: result.confidence || 0
+  }, (response) => {
+    console.log('[BRADLEY] Stats updated:', response);
+  });
+  
+  // Fade out after 3 seconds
+  setTimeout(() => {
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.remove(), 500);
+  }, 3000);
+});
+
+File: background.js
+Ensure stats are persisted to Chrome storage:
+javascript// Initialize stats
+let stats = {
+  totalScans: 0,
+  threatsBlocked: 0
+};
+
+// Load stats from storage on startup
+chrome.storage.local.get(['stats'], (result) => {
+  if (result.stats) {
+    stats = result.stats;
+    console.log('[BRADLEY] Loaded stats:', stats);
+  }
+});
+
+// Listen for messages
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('[BRADLEY] Message received:', message);
+  
+  if (message.type === 'SCAN_COMPLETE') {
+    // Increment stats
+    stats.totalScans++;
+    if (message.isThreat) {
+      stats.threatsBlocked++;
+    }
+    
+    // Save to storage
+    chrome.storage.local.set({ stats }, () => {
+      console.log('[BRADLEY] Stats saved:', stats);
+      sendResponse({ success: true, stats });
+    });
+    
+    return true; // Keep channel open for async response
+  }
+  
+  if (message.type === 'GET_STATS') {
+    sendResponse(stats);
+    return true;
+  }
+});
+
+File: popup.js
+Load and display stats when popup opens:
+javascript// Load stats when popup opens
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('[BRADLEY] Popup loaded');
+  
+  // Get stats from background
+  chrome.runtime.sendMessage({ type: 'GET_STATS' }, (response) => {
+    console.log('[BRADLEY] Stats received:', response);
+    
+    if (response) {
+      const scannedEl = document.getElementById('scanned-count');
+      const threatsEl = document.getElementById('threats-count');
+      
+      if (scannedEl) scannedEl.textContent = response.totalScans || 0;
+      if (threatsEl) threatsEl.textContent = response.threatsBlocked || 0;
+    }
+  });
+  
+  // Also try loading directly from storage as backup
+  chrome.storage.local.get(['stats'], (result) => {
+    console.log('[BRADLEY] Stats from storage:', result);
+    if (result.stats) {
+      const scannedEl = document.getElementById('scanned-count');
+      const threatsEl = document.getElementById('threats-count');
+      
+      if (scannedEl) scannedEl.textContent = result.stats.totalScans || 0;
+      if (threatsEl) threatsEl.textContent = result.stats.threatsBlocked || 0;
+    }
+  });
+});
+
+File: popup.html
+Verify the HTML has the correct element IDs:
+html<div class="stat">
+  <div class="stat-value" id="scanned-count">0</div>
+  <div class="stat-label">Media Scanned</div>
+</div>
+<div class="stat">
+  <div class="stat-value" id="threats-count">0</div>
+  <div class="stat-label">Threats Blocked</div>
+</div>
+Make sure the IDs are scanned-count and threats-count (matching what popup.js looks for).
+
+SUMMARY OF CHANGES NEEDED
+
+content.js:
+
+Set video.style.position = 'relative'
+Change document.body.appendChild(overlay) → video.appendChild(overlay)
+Ensure chrome.runtime.sendMessage called after scan
+
+
+background.js:
+
+Load stats from storage on startup
+Save stats to storage when updated
+Return true in message listener for async response
+
+
+popup.js:
+
+Load stats on DOMContentLoaded
+Try both message passing AND direct storage read
+Use correct element IDs
+
+
+popup.html:
+
+Verify IDs are scanned-count and threats-count
+
+
+
+
+After making these changes:
+
+Update the extension files
+User should re-download and reload extension
+Test on page with videos
+
+
+END OF INSTRUCTIONS

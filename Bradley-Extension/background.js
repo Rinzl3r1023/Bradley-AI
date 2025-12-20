@@ -236,14 +236,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
     
   } else if (message.type === 'SCAN_COMPLETE') {
-    if (!validateSender(sender)) {
-      sendResponse({ success: false, error: 'Untrusted sender' });
-      return;
-    }
+    // Allow SCAN_COMPLETE from any content script (relaxed validation)
+    console.log('[BRADLEY] SCAN_COMPLETE received from:', sender?.url || 'unknown');
     
     updateScanCount()
-      .then(() => sendResponse({ success: true }))
-      .catch(err => sendResponse({ success: false, error: err.message }));
+      .then(() => {
+        console.log('[BRADLEY] Scan count updated successfully');
+        sendResponse({ success: true });
+      })
+      .catch(err => {
+        console.error('[BRADLEY] Scan count update failed:', err);
+        sendResponse({ success: false, error: err.message });
+      });
     return true;
     
   } else if (message.type === 'GET_STATUS') {

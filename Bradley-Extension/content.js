@@ -205,9 +205,15 @@ class ScanIndicator {
   createOverlay() {
     this.overlay = document.createElement('div');
     this.overlay.className = 'bradley-indicator bradley-scanning';
-    const parent = this.el.parentElement;
-    if (parent && getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
-    parent.appendChild(this.overlay);
+    
+    // Make the media element the positioning context
+    const computedPosition = getComputedStyle(this.el).position;
+    if (computedPosition === 'static') {
+      this.el.style.position = 'relative';
+    }
+    
+    // Append directly to the media element
+    this.el.appendChild(this.overlay);
   }
   remove() {
     if (this.overlay) {
