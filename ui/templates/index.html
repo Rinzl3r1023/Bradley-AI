@@ -1,159 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bradley AI — Enter the System</title>
-    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bradley AI Guardian - Real-time Deepfake Detection</title>
+  <meta name="description" content="Browser extension that detects AI-generated videos instantly. Know what's real with clear results: Human-Generated, AI-Generated, or Unknown.">
+  <link rel="stylesheet" href="/static/css/home.css">
+  <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
 </head>
 <body>
-    <div class="grid-background"></div>
-    <div class="scanlines"></div>
-    
+  
+  <section class="hero">
     <div class="container">
-        <header class="header">
-            <div class="logo-container">
-                <div class="logo-glow"></div>
-                <h1 class="logo">BRADLEY<span class="ai">AI</span></h1>
-            </div>
-            <p class="tagline">THE GUARDIAN PROGRAM FOR THE REAL WORLD</p>
-        </header>
-
-        <main class="main-content">
-            <div class="status-panel">
-                <div class="panel-header">
-                    <span class="indicator online"></span>
-                    <span>SYSTEM STATUS</span>
-                </div>
-                <div class="status-grid">
-                    <div class="status-item">
-                        <span class="label">Guardian</span>
-                        <span class="value" id="guardian-status">ONLINE</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="label">Version</span>
-                        <span class="value" id="version">v0.1.0</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="label">Node ID</span>
-                        <span class="value" id="node-id">...</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="label">Threats Detected</span>
-                        <span class="value threat" id="threats-count">0</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="detection-panel">
-                <div class="panel-header">
-                    <span class="indicator scanning"></span>
-                    <span>THREAT DETECTION ENGINE</span>
-                </div>
-                <div class="detection-content">
-                    <div class="detector-card" onclick="openUpload('video')">
-                        <div class="detector-icon video-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                                <path d="M10 9l5 3-5 3V9z"/>
-                            </svg>
-                        </div>
-                        <h3>DEEPFAKE VIDEO</h3>
-                        <p>Real-time video manipulation detection</p>
-                        <div class="confidence-bar">
-                            <div class="confidence-fill" style="width: 94%"></div>
-                        </div>
-                        <span class="confidence-text">Click to upload video</span>
-                    </div>
-                    <div class="detector-card" onclick="openUpload('audio')">
-                        <div class="detector-icon audio-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 1v22M8 4v16M16 4v16M4 8v8M20 8v8"/>
-                            </svg>
-                        </div>
-                        <h3>VOICE CLONE</h3>
-                        <p>AI-generated voice detection</p>
-                        <div class="confidence-bar">
-                            <div class="confidence-fill" style="width: 91%"></div>
-                        </div>
-                        <span class="confidence-text">Click to upload audio</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="upload-panel" id="upload-panel" style="display: none;">
-                <div class="panel-header">
-                    <span class="indicator"></span>
-                    <span id="upload-title">UPLOAD FILE</span>
-                </div>
-                <div class="upload-content">
-                    <input type="file" id="file-input" style="display: none;">
-                    <div class="upload-zone" onclick="document.getElementById('file-input').click()">
-                        <div class="upload-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="17 8 12 3 7 8"/>
-                                <line x1="12" y1="3" x2="12" y2="15"/>
-                            </svg>
-                        </div>
-                        <p id="upload-instructions">Click or drag to upload</p>
-                        <p class="upload-formats" id="upload-formats"></p>
-                    </div>
-                    <div class="upload-progress" id="upload-progress" style="display: none;">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progress-fill"></div>
-                        </div>
-                        <span class="progress-text" id="progress-text">Analyzing...</span>
-                    </div>
-                    <button class="cancel-btn" onclick="closeUpload()">CANCEL</button>
-                </div>
-            </div>
-
-            <div class="action-panel">
-                <button class="scan-button" onclick="runScan()">
-                    <span class="button-glow"></span>
-                    <span class="button-text">DEMO SCAN</span>
-                </button>
-                <a href="/beta" class="beta-button">
-                    <span class="button-text">JOIN CLOSED BETA</span>
-                </a>
-            </div>
-
-            <div class="terminal-panel">
-                <div class="panel-header">
-                    <span class="indicator"></span>
-                    <span>SYSTEM LOG</span>
-                </div>
-                <div class="terminal" id="terminal">
-                    <div class="terminal-line">
-                        <span class="timestamp">[INIT]</span>
-                        <span class="message">Bradley AI online.</span>
-                    </div>
-                    <div class="terminal-line">
-                        <span class="timestamp">[INIT]</span>
-                        <span class="message">Guardian program activated.</span>
-                    </div>
-                    <div class="terminal-line">
-                        <span class="timestamp">[INIT]</span>
-                        <span class="message">Protecting the grid...</span>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <footer class="footer">
-            <div class="footer-content">
-                <p>"Alan Bradley created Tron to protect the system from the MCP.</p>
-                <p>We created Bradley to protect users from malicious AI."</p>
-            </div>
-            <div class="token-badge">
-                <span class="token-symbol">$BRADLEY</span>
-                <span class="token-network">BASE NETWORK</span>
-            </div>
-        </footer>
+      <div class="logo-container">
+        <div class="logo">&#x27D0;</div>
+      </div>
+      
+      <h1 class="hero-title">BRADLEY AI GUARDIAN</h1>
+      <p class="hero-subtitle">KNOW WHAT'S REAL. AUTOMATICALLY.</p>
+      
+      <p class="hero-description">
+        Real-time deepfake detection while you browse.<br>
+        Clear results on every video. Zero downloads required.
+      </p>
+      
+      <div class="cta-buttons">
+        <button id="install-extension-btn" class="btn-primary">
+          ADD TO CHROME - FREE
+        </button>
+        <a href="#analyzer" class="btn-secondary">
+          Or Analyze URL
+        </a>
+      </div>
+      
+      <div class="benefits">
+        <div class="benefit">
+          <span class="benefit-icon">&#x26A1;</span>
+          <span class="benefit-text">Instant Scanning</span>
+        </div>
+        <div class="benefit">
+          <span class="benefit-icon">&#x2713;</span>
+          <span class="benefit-text">Clear AI Detection</span>
+        </div>
+        <div class="benefit">
+          <span class="benefit-icon">&#x1F310;</span>
+          <span class="benefit-text">Works Everywhere</span>
+        </div>
+      </div>
     </div>
-
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  </section>
+  
+  <section id="analyzer" class="analyzer-section">
+    <div class="container">
+      <h2 class="section-title">Or Analyze a Video URL Instantly</h2>
+      <p class="section-subtitle">Paste any video link - no download required</p>
+      
+      <div class="url-input-container">
+        <input 
+          type="url" 
+          id="video-url-input" 
+          class="url-input"
+          placeholder="Paste video URL here (YouTube, Twitter, news sites, direct links, etc.)"
+          aria-label="Video URL to analyze"
+        />
+        <button 
+          id="analyze-btn" 
+          class="btn-analyze" 
+          disabled
+          aria-label="Analyze video"
+        >
+          ANALYZE
+        </button>
+      </div>
+      
+      <div class="supported-platforms">
+        <span class="platform-label">Works with:</span>
+        <span class="platform-tag">YouTube</span>
+        <span class="platform-tag">Twitter/X</span>
+        <span class="platform-tag">News Sites</span>
+        <span class="platform-tag">Direct MP4</span>
+      </div>
+      
+      <div class="usage-note">
+        <span class="note-text">Free users: 3 analyses per hour. Install extension for unlimited.</span>
+      </div>
+      
+      <div id="analysis-loading" class="analysis-loading hidden">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Analyzing video...</p>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+      
+      <div id="analysis-results" class="analysis-results hidden">
+      </div>
+      
+      <div id="analysis-error" class="analysis-error hidden">
+      </div>
+    </div>
+  </section>
+  
+  <section class="how-it-works">
+    <div class="container">
+      <h2 class="section-title">How Bradley Works</h2>
+      <p class="section-subtitle">Three steps to protection</p>
+      
+      <div class="steps-grid">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3 class="step-title">Install Extension</h3>
+          <p class="step-description">One-click install from Chrome Web Store. Works in seconds.</p>
+        </div>
+        
+        <div class="step-arrow">&rarr;</div>
+        
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3 class="step-title">Browse Normally</h3>
+          <p class="step-description">Visit any website. Bradley scans videos automatically.</p>
+        </div>
+        
+        <div class="step-arrow">&rarr;</div>
+        
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3 class="step-title">See Clear Results</h3>
+          <p class="step-description">Instant badges show what's real, what's AI, what's uncertain.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <section class="badge-states">
+    <div class="container">
+      <h2 class="section-title">Clear, Honest Results</h2>
+      <p class="section-subtitle">Every video gets one of three verdicts</p>
+      
+      <div class="badges-grid">
+        <div class="badge-example">
+          <div class="badge-display badge-real">
+            <span class="badge-icon">&#x2713;</span>
+            <span class="badge-text">Human-Generated</span>
+          </div>
+          <h3 class="badge-title">Authentic Content</h3>
+          <p class="badge-desc">70%+ confidence. No AI detected. Green badge fades after 3 seconds.</p>
+        </div>
+        
+        <div class="badge-example">
+          <div class="badge-display badge-fake">
+            <span class="badge-icon">&#x26A0;</span>
+            <span class="badge-text">AI-Generated</span>
+          </div>
+          <h3 class="badge-title">Deepfake Detected</h3>
+          <p class="badge-desc">70%+ confidence. AI manipulation found. Red badge persists with dismiss button.</p>
+        </div>
+        
+        <div class="badge-example">
+          <div class="badge-display badge-uncertain">
+            <span class="badge-icon">?</span>
+            <span class="badge-text">Unknown</span>
+          </div>
+          <h3 class="badge-title">Uncertain Result</h3>
+          <p class="badge-desc">Below 70% confidence. Detection inconclusive. Yellow badge fades after 5 seconds.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <section class="live-stats">
+    <div class="container">
+      <h2 class="section-title">Protecting the Grid</h2>
+      <p class="section-subtitle">Real-time global impact</p>
+      
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value" id="stat-scans">0</div>
+          <div class="stat-label">Videos Scanned</div>
+        </div>
+        
+        <div class="stat-box">
+          <div class="stat-value" id="stat-threats">0</div>
+          <div class="stat-label">Threats Detected</div>
+        </div>
+        
+        <div class="stat-box">
+          <div class="stat-value" id="stat-users">0</div>
+          <div class="stat-label">Active Users</div>
+        </div>
+        
+        <div class="stat-box">
+          <div class="stat-value" id="stat-uptime">99.7%</div>
+          <div class="stat-label">Uptime</div>
+        </div>
+      </div>
+      
+      <div class="stats-cta">
+        <p>Join thousands protecting themselves from AI misinformation</p>
+        <button class="btn-primary install-extension-trigger">
+          ADD TO CHROME - FREE
+        </button>
+      </div>
+    </div>
+  </section>
+  
+  <section class="why-bradley">
+    <div class="container">
+      <h2 class="section-title">Why Trust Bradley?</h2>
+      
+      <div class="features-grid">
+        <div class="feature">
+          <div class="feature-icon">&#x1F512;</div>
+          <h3 class="feature-title">Privacy First</h3>
+          <p class="feature-desc">Only video URLs analyzed. No browsing history, no personal data collected. HTTPS encrypted.</p>
+        </div>
+        
+        <div class="feature">
+          <div class="feature-icon">&#x26A1;</div>
+          <h3 class="feature-title">Instant Detection</h3>
+          <p class="feature-desc">Results in seconds. No waiting, no manual uploads. Just browse normally.</p>
+        </div>
+        
+        <div class="feature">
+          <div class="feature-icon">&#x1F3AF;</div>
+          <h3 class="feature-title">Honest Uncertainty</h3>
+          <p class="feature-desc">When detection is unclear, we tell you. No false confidence. Just truth.</p>
+        </div>
+        
+        <div class="feature">
+          <div class="feature-icon">&#x1F6E1;</div>
+          <h3 class="feature-title">Tron Legacy</h3>
+          <p class="feature-desc">Inspired by Alan Bradley's Tron program - protecting users from malicious systems since 1982.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <section class="system-log">
+    <div class="container">
+      <h2 class="section-title">System Log</h2>
+      
+      <div class="log-container" id="system-log">
+        <div class="log-entry">[2025-12-21 14:32:18] Bradley v1.4.0 online</div>
+        <div class="log-entry">[2025-12-21 14:32:19] Extension active: <span id="log-users">1,204</span> users</div>
+        <div class="log-entry">[2025-12-21 14:32:20] Scanning... <span id="log-scans">847</span> videos/hour</div>
+        <div class="log-entry log-threat">[2025-12-21 14:32:21] Threat detected: AI-Generated (87%)</div>
+        <div class="log-entry">[2025-12-21 14:32:22] Protecting the grid...</div>
+      </div>
+    </div>
+  </section>
+  
+  <section class="final-cta">
+    <div class="container">
+      <h2 class="cta-title">Ready to Protect Yourself?</h2>
+      <p class="cta-subtitle">Join the fight against AI misinformation</p>
+      
+      <button class="btn-primary btn-large install-extension-trigger">
+        ADD TO CHROME - FREE
+      </button>
+      
+      <div class="cta-footer">
+        <a href="/support" class="footer-link">Support</a>
+        <span class="divider">|</span>
+        <a href="/privacy" class="footer-link">Privacy Policy</a>
+        <span class="divider">|</span>
+        <a href="/beta" class="footer-link">Beta Program</a>
+      </div>
+    </div>
+  </section>
+  
+  <footer class="footer">
+    <div class="container">
+      <p class="footer-quote">
+        "Alan Bradley created Tron to protect the system from the MCP.<br>
+        We created Bradley to protect users from malicious AI."
+      </p>
+      <p class="footer-version">Bradley AI Guardian v1.4.0 | December 2025</p>
+    </div>
+  </footer>
+  
+  <script src="/static/js/analyzer.js"></script>
+  
 </body>
 </html>

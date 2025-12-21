@@ -1,0 +1,1760 @@
+IMPLEMENTATION INSTRUCTIONS FOR REPLIT 📋
+FILES TO CREATE/MODIFY:
+
+✅ templates/index.html - New homepage structure
+✅ static/css/home.css - New homepage styles (Tron theme)
+✅ static/js/analyzer.js - URL analyzer logic
+✅ app.py - Update route (if needed)
+
+Estimated time: 45-60 minutes to implement + test
+
+FILE 1: templates/index.html
+Replace entire homepage with this:
+html<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bradley AI Guardian - Real-time Deepfake Detection</title>
+  <meta name="description" content="Browser extension that detects AI-generated videos instantly. Know what's real with clear results: Human-Generated, AI-Generated, or Unknown.">
+  <link rel="stylesheet" href="/static/css/home.css">
+  <link rel="icon" type="image/png" href="/static/favicon.png">
+</head>
+<body>
+  
+  <!-- HERO SECTION -->
+  <section class="hero">
+    <div class="container">
+      <div class="logo-container">
+        <div class="logo">⟐</div>
+      </div>
+      
+      <h1 class="hero-title">BRADLEY AI GUARDIAN</h1>
+      <p class="hero-subtitle">KNOW WHAT'S REAL. AUTOMATICALLY.</p>
+      
+      <p class="hero-description">
+        Real-time deepfake detection while you browse.<br>
+        Clear results on every video. Zero downloads required.
+      </p>
+      
+      <div class="cta-buttons">
+        <button id="install-extension-btn" class="btn-primary">
+          🌐 ADD TO CHROME - FREE
+        </button>
+        <a href="#analyzer" class="btn-secondary">
+          Or Analyze URL ↓
+        </a>
+      </div>
+      
+      <div class="benefits">
+        <div class="benefit">
+          <span class="benefit-icon">⚡</span>
+          <span class="benefit-text">Instant Scanning</span>
+        </div>
+        <div class="benefit">
+          <span class="benefit-icon">✓</span>
+          <span class="benefit-text">Clear AI Detection</span>
+        </div>
+        <div class="benefit">
+          <span class="benefit-icon">🌐</span>
+          <span class="benefit-text">Works Everywhere</span>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- URL ANALYZER SECTION -->
+  <section id="analyzer" class="analyzer-section">
+    <div class="container">
+      <h2 class="section-title">Or Analyze a Video URL Instantly</h2>
+      <p class="section-subtitle">Paste any video link - no download required</p>
+      
+      <div class="url-input-container">
+        <input 
+          type="url" 
+          id="video-url-input" 
+          class="url-input"
+          placeholder="🔗 Paste video URL here (YouTube, Twitter, news sites, direct links, etc.)"
+          aria-label="Video URL to analyze"
+        />
+        <button 
+          id="analyze-btn" 
+          class="btn-analyze" 
+          disabled
+          aria-label="Analyze video"
+        >
+          ⚡ ANALYZE
+        </button>
+      </div>
+      
+      <div class="supported-platforms">
+        <span class="platform-label">Works with:</span>
+        <span class="platform-tag">YouTube</span>
+        <span class="platform-tag">Twitter/X</span>
+        <span class="platform-tag">News Sites</span>
+        <span class="platform-tag">Direct MP4</span>
+      </div>
+      
+      <div class="usage-note">
+        <span class="note-icon">ℹ️</span>
+        <span class="note-text">Free users: 3 analyses per hour. Install extension for unlimited.</span>
+      </div>
+      
+      <!-- Loading State -->
+      <div id="analysis-loading" class="analysis-loading hidden">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Analyzing video...</p>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+      
+      <!-- Results Container -->
+      <div id="analysis-results" class="analysis-results hidden">
+        <!-- Results injected by JS -->
+      </div>
+      
+      <!-- Error Container -->
+      <div id="analysis-error" class="analysis-error hidden">
+        <!-- Errors injected by JS -->
+      </div>
+    </div>
+  </section>
+  
+  <!-- HOW IT WORKS SECTION -->
+  <section class="how-it-works">
+    <div class="container">
+      <h2 class="section-title">How Bradley Works</h2>
+      <p class="section-subtitle">Three steps to protection</p>
+      
+      <div class="steps-grid">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3 class="step-title">Install Extension</h3>
+          <p class="step-description">One-click install from Chrome Web Store. Works in seconds.</p>
+        </div>
+        
+        <div class="step-arrow">→</div>
+        
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3 class="step-title">Browse Normally</h3>
+          <p class="step-description">Visit any website. Bradley scans videos automatically.</p>
+        </div>
+        
+        <div class="step-arrow">→</div>
+        
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3 class="step-title">See Clear Results</h3>
+          <p class="step-description">Instant badges show what's real, what's AI, what's uncertain.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- BADGE STATES SECTION -->
+  <section class="badge-states">
+    <div class="container">
+      <h2 class="section-title">Clear, Honest Results</h2>
+      <p class="section-subtitle">Every video gets one of three verdicts</p>
+      
+      <div class="badges-grid">
+        <div class="badge-example">
+          <div class="badge-display badge-real">
+            <span class="badge-icon">✓</span>
+            <span class="badge-text">Human-Generated</span>
+          </div>
+          <h3 class="badge-title">Authentic Content</h3>
+          <p class="badge-desc">70%+ confidence. No AI detected. Green badge fades after 3 seconds.</p>
+        </div>
+        
+        <div class="badge-example">
+          <div class="badge-display badge-fake">
+            <span class="badge-icon">⚠</span>
+            <span class="badge-text">AI-Generated</span>
+          </div>
+          <h3 class="badge-title">Deepfake Detected</h3>
+          <p class="badge-desc">70%+ confidence. AI manipulation found. Red badge persists with dismiss button.</p>
+        </div>
+        
+        <div class="badge-example">
+          <div class="badge-display badge-uncertain">
+            <span class="badge-icon">?</span>
+            <span class="badge-text">Unknown</span>
+          </div>
+          <h3 class="badge-title">Uncertain Result</h3>
+          <p class="badge-desc">Below 70% confidence. Detection inconclusive. Yellow badge fades after 5 seconds.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- LIVE STATS SECTION -->
+  <section class="live-stats">
+    <div class="container">
+      <h2 class="section-title">Protecting the Grid</h2>
+      <p class="section-subtitle">Real-time global impact</p>
+      
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value" id="stat-scans">0</div>
+          <div class="stat-label">Videos Scanned</div>
+        </div>
+        
+        <div class="stat-box">
+          <div class="stat-value" id="stat-threats">0</div>
+          <div class="stat-label">Threats Detected</div>
+        </div>
+        
+        <div class="stat-box">
+          <div class="stat-value" id="stat-users">0</div>
+          <div class="stat-label">Active Users</div>
+        </div>
+        
+        <div class="stat-box">
+          <div class="stat-value" id="stat-uptime">99.7%</div>
+          <div class="stat-label">Uptime</div>
+        </div>
+      </div>
+      
+      <div class="stats-cta">
+        <p>Join thousands protecting themselves from AI misinformation</p>
+        <button class="btn-primary install-extension-trigger">
+          🌐 ADD TO CHROME - FREE
+        </button>
+      </div>
+    </div>
+  </section>
+  
+  <!-- WHY BRADLEY SECTION -->
+  <section class="why-bradley">
+    <div class="container">
+      <h2 class="section-title">Why Trust Bradley?</h2>
+      
+      <div class="features-grid">
+        <div class="feature">
+          <div class="feature-icon">🔒</div>
+          <h3 class="feature-title">Privacy First</h3>
+          <p class="feature-desc">Only video URLs analyzed. No browsing history, no personal data collected. HTTPS encrypted.</p>
+        </div>
+        
+        <div class="feature">
+          <div class="feature-icon">⚡</div>
+          <h3 class="feature-title">Instant Detection</h3>
+          <p class="feature-desc">Results in seconds. No waiting, no manual uploads. Just browse normally.</p>
+        </div>
+        
+        <div class="feature">
+          <div class="feature-icon">🎯</div>
+          <h3 class="feature-title">Honest Uncertainty</h3>
+          <p class="feature-desc">When detection is unclear, we tell you. No false confidence. Just truth.</p>
+        </div>
+        
+        <div class="feature">
+          <div class="feature-icon">🛡️</div>
+          <h3 class="feature-title">Tron Legacy</h3>
+          <p class="feature-desc">Inspired by Alan Bradley's Tron program — protecting users from malicious systems since 1982.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- SYSTEM LOG SECTION -->
+  <section class="system-log">
+    <div class="container">
+      <h2 class="section-title">System Log</h2>
+      
+      <div class="log-container" id="system-log">
+        <div class="log-entry">[2025-12-21 14:32:18] Bradley v1.4.0 online</div>
+        <div class="log-entry">[2025-12-21 14:32:19] Extension active: <span id="log-users">1,204</span> users</div>
+        <div class="log-entry">[2025-12-21 14:32:20] Scanning... <span id="log-scans">847</span> videos/hour</div>
+        <div class="log-entry log-threat">[2025-12-21 14:32:21] Threat detected: AI-Generated (87%)</div>
+        <div class="log-entry">[2025-12-21 14:32:22] Protecting the grid...</div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- FINAL CTA SECTION -->
+  <section class="final-cta">
+    <div class="container">
+      <h2 class="cta-title">Ready to Protect Yourself?</h2>
+      <p class="cta-subtitle">Join the fight against AI misinformation</p>
+      
+      <button class="btn-primary btn-large install-extension-trigger">
+        🌐 ADD TO CHROME - FREE
+      </button>
+      
+      <div class="cta-footer">
+        <a href="/support" class="footer-link">Support</a>
+        <span class="divider">|</span>
+        <a href="/privacy" class="footer-link">Privacy Policy</a>
+        <span class="divider">|</span>
+        <a href="/beta" class="footer-link">Beta Program</a>
+      </div>
+    </div>
+  </section>
+  
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <p class="footer-quote">
+        "Alan Bradley created Tron to protect the system from the MCP.<br>
+        We created Bradley to protect users from malicious AI."
+      </p>
+      <p class="footer-version">Bradley AI Guardian v1.4.0 | December 2025</p>
+    </div>
+  </footer>
+  
+  <!-- Scripts -->
+  <script src="/static/js/analyzer.js"></script>
+  
+</body>
+</html>
+
+FILE 2: static/css/home.css
+Create new file with complete Tron styling:
+css/* BRADLEY AI HOMEPAGE - TRON THEME */
+/* v1.4.0 - December 2025 */
+
+/* RESET & BASE */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Courier New', monospace;
+  background: #0a0a0a;
+  color: #00ffff;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* GRID BACKGROUND EFFECT */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 255, 0.03) 2px,
+      rgba(0, 255, 255, 0.03) 4px
+    );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ==================== HERO SECTION ==================== */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 100px 20px 60px 20px;
+  background: linear-gradient(180deg, rgba(0, 255, 255, 0.05) 0%, transparent 50%);
+}
+
+.logo-container {
+  margin-bottom: 24px;
+}
+
+.logo {
+  font-size: 120px;
+  color: #00ffff;
+  text-shadow: 
+    0 0 20px rgba(0, 255, 255, 1),
+    0 0 40px rgba(0, 255, 255, 0.8),
+    0 0 60px rgba(0, 255, 255, 0.6);
+  animation: pulse 2s infinite;
+  display: inline-block;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1; 
+    text-shadow: 
+      0 0 20px rgba(0, 255, 255, 1),
+      0 0 40px rgba(0, 255, 255, 0.8);
+  }
+  50% { 
+    opacity: 0.8; 
+    text-shadow: 
+      0 0 30px rgba(0, 255, 255, 1),
+      0 0 60px rgba(0, 255, 255, 1);
+  }
+}
+
+.hero-title {
+  font-size: 42px;
+  font-weight: normal;
+  letter-spacing: 6px;
+  margin-bottom: 12px;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.hero-subtitle {
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  margin-bottom: 24px;
+  color: #fff;
+}
+
+.hero-description {
+  font-size: 16px;
+  color: #aaa;
+  margin-bottom: 40px;
+  line-height: 1.8;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 60px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #00ffff, #00cccc);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 18px 40px;
+  font-size: 16px;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #33ffff, #00ffff);
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #00ffff;
+  border: 2px solid rgba(0, 255, 255, 0.5);
+  border-radius: 8px;
+  padding: 16px 40px;
+  font-size: 16px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 2px;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.btn-secondary:hover {
+  background: rgba(0, 255, 255, 0.1);
+  border-color: #00ffff;
+  transform: translateY(-2px);
+}
+
+.benefits {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.benefit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #00ffff;
+}
+
+.benefit-icon {
+  font-size: 24px;
+}
+
+/* ==================== URL ANALYZER SECTION ==================== */
+.analyzer-section {
+  padding: 80px 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.section-title {
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.section-subtitle {
+  font-size: 14px;
+  text-align: center;
+  color: #666;
+  margin-bottom: 40px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.url-input-container {
+  display: flex;
+  gap: 12px;
+  max-width: 900px;
+  margin: 0 auto 20px auto;
+}
+
+.url-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 18px 24px;
+  font-size: 15px;
+  color: #00ffff;
+  font-family: 'Courier New', monospace;
+  transition: all 0.3s ease;
+}
+
+.url-input:focus {
+  outline: none;
+  border-color: #00ffff;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+}
+
+.url-input::placeholder {
+  color: #444;
+}
+
+.btn-analyze {
+  background: linear-gradient(135deg, #00ffff, #00cccc);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 18px 36px;
+  font-size: 15px;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.btn-analyze:hover:not(:disabled) {
+  background: linear-gradient(135deg, #33ffff, #00ffff);
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.btn-analyze:disabled {
+  background: rgba(0, 255, 255, 0.2);
+  color: #555;
+  cursor: not-allowed;
+}
+
+.supported-platforms {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.platform-label {
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.platform-tag {
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  color: #00ffff;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.usage-note {
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.note-icon {
+  font-size: 16px;
+}
+
+/* Loading State */
+.analysis-loading {
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid rgba(0, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 40px;
+  margin: 32px auto 0 auto;
+  max-width: 600px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(0, 255, 255, 0.2);
+  border-top: 4px solid #00ffff;
+  border-radius: 50%;
+  margin: 0 auto 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: #00ffff;
+  font-size: 18px;
+  margin-bottom: 24px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ffff, #00cccc);
+  width: 0%;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+}
+
+/* Results Display */
+.analysis-results {
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid #00ffff;
+  border-radius: 12px;
+  padding: 40px;
+  margin: 32px auto 0 auto;
+  max-width: 700px;
+  box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+  text-align: center;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.result-icon {
+  font-size: 56px;
+}
+
+.result-title {
+  font-size: 28px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+.result-title.human {
+  color: #00ff00;
+  text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+}
+
+.result-title.ai {
+  color: #ff0000;
+  text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+}
+
+.result-title.unknown {
+  color: #ffaa00;
+  text-shadow: 0 0 10px rgba(255, 170, 0, 0.8);
+}
+
+.result-confidence {
+  font-size: 56px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.result-meta {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  font-size: 11px;
+  color: #666;
+  flex-wrap: wrap;
+}
+
+.result-description {
+  color: #aaa;
+  line-height: 1.8;
+  margin-bottom: 32px;
+  font-size: 15px;
+}
+
+.result-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Error State */
+.analysis-error {
+  background: rgba(255, 0, 0, 0.1);
+  border: 2px solid rgba(255, 0, 0, 0.4);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 32px auto 0 auto;
+  max-width: 600px;
+  text-align: center;
+}
+
+.error-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  color: #ff0000;
+  text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+.error-message {
+  font-size: 15px;
+  color: #ff6666;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+/* ==================== HOW IT WORKS ==================== */
+.how-it-works {
+  padding: 80px 20px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.steps-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+.step {
+  flex: 1;
+  min-width: 200px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 32px 24px;
+  transition: all 0.3s ease;
+}
+
+.step:hover {
+  border-color: #00ffff;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  transform: translateY(-4px);
+}
+
+.step-number {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #00ffff, #00cccc);
+  color: #000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: bold;
+  margin: 0 auto 20px;
+}
+
+.step-title {
+  font-size: 20px;
+  margin-bottom: 12px;
+  color: #00ffff;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.step-description {
+  font-size: 14px;
+  color: #aaa;
+  line-height: 1.6;
+}
+
+.step-arrow {
+  font-size: 32px;
+  color: #00ffff;
+  opacity: 0.5;
+}
+
+/* ==================== BADGE STATES ==================== */
+.badge-states {
+  padding: 80px 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.badge-example {
+  text-align: center;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 32px 24px;
+  transition: all 0.3s ease;
+}
+
+.badge-example:hover {
+  border-color: #00ffff;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  transform: translateY(-4px);
+}
+
+.badge-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.badge-real {
+  background: rgba(34, 197, 94, 0.9);
+  color: white;
+}
+
+.badge-fake {
+  background: rgba(239, 68, 68, 0.95);
+  color: white;
+}
+
+.badge-uncertain {
+  background: rgba(245, 158, 11, 0.9);
+  color: white;
+}
+
+.badge-icon {
+  font-size: 18px;
+}
+
+.badge-title {
+  font-size: 18px;
+  color: #00ffff;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.badge-desc {
+  font-size: 13px;
+  color: #aaa;
+  line-height: 1.6;
+}
+
+/* ==================== LIVE STATS ==================== */
+.live-stats {
+  padding: 80px 20px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  max-width: 1000px;
+  margin: 0 auto 40px;
+}
+
+.stat-box {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 32px 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.stat-box:hover {
+  border-color: #00ffff;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  transform: translateY(-4px);
+}
+
+.stat-value {
+  font-size: 48px;
+  font-weight: bold;
+  color: #00ffff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+  display: block;
+  margin-bottom: 12px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stats-cta {
+  text-align: center;
+  margin-top: 60px;
+}
+
+.stats-cta p {
+  font-size: 16px;
+  color: #aaa;
+  margin-bottom: 24px;
+}
+
+/* ==================== WHY BRADLEY ==================== */
+.why-bradley {
+  padding: 80px 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.feature {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 32px 24px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.feature:hover {
+  border-color: #00ffff;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  transform: translateY(-4px);
+}
+
+.feature-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.feature-title {
+  font-size: 20px;
+  color: #00ffff;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.feature-desc {
+  font-size: 14px;
+  color: #aaa;
+  line-height: 1.7;
+}
+
+/* ==================== SYSTEM LOG ==================== */
+.system-log {
+  padding: 80px 20px;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.log-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 24px;
+  font-size: 13px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.log-entry {
+  color: #00ffff;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+  opacity: 0.8;
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+}
+
+.log-threat {
+  color: #ff6666;
+  font-weight: bold;
+}
+
+/* ==================== FINAL CTA ==================== */
+.final-cta {
+  padding: 100px 20px;
+  background: linear-gradient(180deg, transparent, rgba(0, 255, 255, 0.05));
+  text-align: center;
+}
+
+.cta-title {
+  font-size: 36px;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.cta-subtitle {
+  font-size: 16px;
+  color: #aaa;
+  margin-bottom: 40px;
+}
+
+.btn-large {
+  font-size: 18px;
+  padding: 24px 60px;
+}
+
+.cta-footer {
+  margin-top: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.footer-link {
+  color: #00ffff;
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.divider {
+  color: #444;
+}
+
+/* ==================== FOOTER ==================== */
+.footer {
+  padding: 60px 20px 40px;
+  background: rgba(0, 0, 0, 0.9);
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+  text-align: center;
+}
+
+.footer-quote {
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+  margin-bottom: 20px;
+  line-height: 1.8;
+}
+
+.footer-version {
+  font-size: 11px;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 28px;
+  }
+  
+  .hero-subtitle {
+    font-size: 20px;
+  }
+  
+  .logo {
+    font-size: 80px;
+  }
+  
+  .url-input-container {
+    flex-direction: column;
+  }
+  
+  .btn-analyze {
+    width: 100%;
+  }
+  
+  .steps-grid {
+    flex-direction: column;
+  }
+  
+  .step-arrow {
+    transform: rotate(90deg);
+  }
+  
+  .section-title {
+    font-size: 24px;
+  }
+  
+  .stat-value {
+    font-size: 36px;
+  }
+}
+
+/* ==================== ANIMATIONS ==================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.analysis-results,
+.analysis-error,
+.analysis-loading {
+  animation: fadeIn 0.5s ease;
+}
+
+FILE 3: static/js/analyzer.js
+Create new file with URL analyzer logic:
+javascript// BRADLEY AI - URL ANALYZER
+// v1.4.0 - December 2025
+
+const CONFIG = {
+  API_BASE: 'https://bradleyai.replit.app',
+  REQUEST_TIMEOUT: 30000,  // 30 seconds
+  MAX_FREE_ANALYSES: 3,
+  RATE_LIMIT_WINDOW: 3600000  // 1 hour in ms
+};
+
+class BradleyAnalyzer {
+  constructor() {
+    this.input = document.getElementById('video-url-input');
+    this.analyzeBtn = document.getElementById('analyze-btn');
+    this.resultsContainer = document.getElementById('analysis-results');
+    this.loadingContainer = document.getElementById('analysis-loading');
+    this.errorContainer = document.getElementById('analysis-error');
+    this.progressBar = document.getElementById('progress-fill');
+    
+    this.progressInterval = null;
+    
+    this.init();
+    this.initInstallButtons();
+    this.initStats();
+  }
+  
+  init() {
+    // Enable/disable analyze button based on URL validity
+    this.input.addEventListener('input', () => {
+      const isValid = this.isValidURL(this.input.value.trim());
+      this.analyzeBtn.disabled = !isValid;
+    });
+    
+    // Handle analyze button click
+    this.analyzeBtn.addEventListener('click', () => {
+      this.analyzeVideo();
+    });
+    
+    // Allow Enter key to trigger analysis
+    this.input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !this.analyzeBtn.disabled) {
+        this.analyzeVideo();
+      }
+    });
+  }
+  
+  initInstallButtons() {
+    // Handle all "Install Extension" buttons
+    const installButtons = document.querySelectorAll('#install-extension-btn, .install-extension-trigger');
+    
+    installButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.handleInstallExtension();
+      });
+    });
+  }
+  
+  handleInstallExtension() {
+    // Check if extension is already installed
+    if (this.isExtensionInstalled()) {
+      alert('✓ Bradley AI Extension is already installed!');
+      return;
+    }
+    
+    // TODO: Replace with actual Chrome Web Store URL after approval
+    const chromeStoreUrl = 'https://chrome.google.com/webstore/detail/bradley-ai-guardian/YOUR_EXTENSION_ID';
+    
+    // For now, show coming soon message
+    alert('🚀 Chrome Web Store submission pending!\n\nExtension will be available for one-click install within 7 days.\n\nFor early access, join our beta program.');
+    
+    // Redirect to beta signup
+    window.location.href = '/beta';
+    
+    // After Chrome Web Store approval, use this instead:
+    // window.open(chromeStoreUrl, '_blank');
+  }
+  
+  isExtensionInstalled() {
+    // Check if Bradley extension is installed
+    // Extension sets a global flag when active
+    return typeof window.BradleyExtensionActive !== 'undefined';
+  }
+  
+  isValidURL(str) {
+    try {
+      const url = new URL(str);
+      return ['http:', 'https:'].includes(url.protocol);
+    } catch {
+      return false;
+    }
+  }
+  
+  checkRateLimit() {
+    const analyses = JSON.parse(localStorage.getItem('bradley_analyses') || '[]');
+    const now = Date.now();
+    
+    // Filter analyses within rate limit window
+    const recentAnalyses = analyses.filter(timestamp => 
+      now - timestamp < CONFIG.RATE_LIMIT_WINDOW
+    );
+    
+    // Check if extension installed (unlimited)
+    if (this.isExtensionInstalled()) {
+      return { allowed: true, remaining: 'unlimited' };
+    }
+    
+    // Free users: 3 per hour
+    if (recentAnalyses.length >= CONFIG.MAX_FREE_ANALYSES) {
+      return { 
+        allowed: false, 
+        remaining: 0,
+        resetTime: new Date(recentAnalyses[0] + CONFIG.RATE_LIMIT_WINDOW)
+      };
+    }
+    
+    return { 
+      allowed: true, 
+      remaining: CONFIG.MAX_FREE_ANALYSES - recentAnalyses.length 
+    };
+  }
+  
+  recordAnalysis() {
+    if (this.isExtensionInstalled()) return; // Don't track for extension users
+    
+    const analyses = JSON.parse(localStorage.getItem('bradley_analyses') || '[]');
+    analyses.push(Date.now());
+    
+    // Keep only recent analyses
+    const now = Date.now();
+    const recentAnalyses = analyses.filter(timestamp => 
+      now - timestamp < CONFIG.RATE_LIMIT_WINDOW
+    );
+    
+    localStorage.setItem('bradley_analyses', JSON.stringify(recentAnalyses));
+  }
+  
+  async analyzeVideo() {
+    const url = this.input.value.trim();
+    
+    if (!this.isValidURL(url)) {
+      this.showError('Invalid URL', 'Please enter a valid video URL starting with http:// or https://');
+      return;
+    }
+    
+    // Check rate limit
+    const rateLimit = this.checkRateLimit();
+    if (!rateLimit.allowed) {
+      const resetTime = rateLimit.resetTime.toLocaleTimeString();
+      this.showError(
+        'Rate Limit Reached',
+        `Free users can analyze ${CONFIG.MAX_FREE_ANALYSES} videos per hour.\n\nNext analysis available at: ${resetTime}\n\nInstall the browser extension for unlimited analyses!`
+      );
+      return;
+    }
+    
+    // Hide previous results/errors
+    this.hideAll();
+    
+    // Show loading state
+    this.showLoading();
+    
+    // Simulate progress
+    this.simulateProgress();
+    
+    try {
+      const result = await this.callAPI(url);
+      this.recordAnalysis();
+      this.hideLoading();
+      this.showResult(result, url);
+    } catch (error) {
+      this.hideLoading();
+      this.showError('Analysis Failed', error.message || 'Unable to analyze video. Please try again.');
+    }
+  }
+  
+  async callAPI(url) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+    
+    try {
+      const response = await fetch(`${CONFIG.API_BASE}/detect_video_deepfake`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url_or_path: url }),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeout);
+      
+      if (!response.ok) {
+        throw new Error(`Server error (${response.status}). Please try again.`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data || typeof data.is_deepfake !== 'boolean') {
+        throw new Error('Invalid response from server');
+      }
+      
+      return data;
+      
+    } catch (error) {
+      clearTimeout(timeout);
+      
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout. Video may be too large or server is busy.');
+      }
+      
+      throw error;
+    }
+  }
+  
+  simulateProgress() {
+    let progress = 0;
+    this.progressInterval = setInterval(() => {
+      progress += Math.random() * 12;
+      if (progress > 85) progress = 85; // Cap at 85% until real result
+      this.progressBar.style.width = `${progress}%`;
+    }, 400);
+  }
+  
+  showLoading() {
+    this.loadingContainer.classList.remove('hidden');
+    this.progressBar.style.width = '0%';
+  }
+  
+  hideLoading() {
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+      this.progressInterval = null;
+    }
+    this.progressBar.style.width = '100%';
+    setTimeout(() => {
+      this.loadingContainer.classList.add('hidden');
+    }, 300);
+  }
+  
+  showResult(result, originalUrl) {
+    const { is_deepfake, confidence } = result;
+    const confidencePercent = Math.round(confidence * 100);
+    
+    let resultType, resultIcon, resultTitle, resultDescription;
+    
+    if (confidence >= 0.70) {
+      if (is_deepfake) {
+        resultType = 'ai';
+        resultIcon = '⚠';
+        resultTitle = 'AI-GENERATED CONTENT DETECTED';
+        resultDescription = 'This video appears to contain AI-generated or manipulated content. Exercise caution when sharing or trusting this media.';
+      } else {
+        resultType = 'human';
+        resultIcon = '✓';
+        resultTitle = 'HUMAN-GENERATED CONTENT';
+        resultDescription = 'No AI manipulation detected in this video. This content appears to be authentic.';
+      }
+    } else {
+      resultType = 'unknown';
+      resultIcon = '?';
+      resultTitle = 'UNCERTAIN RESULT';
+      resultDescription = 'Detection confidence is low. The video may contain subtle manipulation or be in a format that\'s difficult to analyze. Proceed with caution.';
+    }
+    
+    const now = new Date().toLocaleString();
+    const safeUrl = this.sanitizeUrlForDisplay(originalUrl);
+    
+    this.resultsContainer.innerHTML = `
+      <div class="result-header">
+        <span class="result-icon">${resultIcon}</span>
+        <h3 class="result-title ${resultType}">${resultTitle}</h3>
+      </div>
+      
+      <div class="result-confidence" style="color: ${resultType === 'human' ? '#00ff00' : resultType === 'ai' ? '#ff0000' : '#ffaa00'}">
+        ${confidencePercent}% Confidence
+      </div>
+      
+      <div class="result-meta">
+        <span>Model: Bradley v1.4.0</span>
+        <span>|</span>
+        <span>${now}</span>
+      </div>
+      
+      <p class="result-description">${resultDescription}</p>
+      
+      <div class="result-actions">
+        <button class="btn-analyze" onclick="bradleyAnalyzer.reset()">⚡ ANALYZE ANOTHER</button>
+        <button class="btn-secondary" onclick="bradleyAnalyzer.copyResult('${resultTitle.replace(/'/g, "\\'")}', ${confidencePercent})">📋 COPY RESULT</button>
+      </div>
+    `;
+    
+    this.resultsContainer.classList.remove('hidden');
+    
+    // Scroll to results
+    this.resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  
+  showError(title, message) {
+    this.errorContainer.innerHTML = `
+      <h3 class="error-title">${this.escapeHtml(title)}</h3>
+      <p class="error-message">${this.escapeHtml(message).replace(/\n/g, '<br>')}</p>
+      <button class="btn-secondary" onclick="bradleyAnalyzer.reset()">TRY AGAIN</button>
+    `;
+    this.errorContainer.classList.remove('hidden');
+    
+    // Scroll to error
+    this.errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  
+  hideAll() {
+    this.resultsContainer.classList.add('hidden');
+    this.errorContainer.classList.add('hidden');
+    this.loadingContainer.classList.add('hidden');
+  }
+  
+  reset() {
+    this.input.value = '';
+    this.input.focus();
+    this.analyzeBtn.disabled = true;
+    this.hideAll();
+  }
+  
+  copyResult(title, confidence) {
+    const text = `Bradley AI Analysis Result:\n\n${title}\nConfidence: ${confidence}%\nAnalyzed: ${new Date().toLocaleString()}\n\nPowered by Bradley AI Guardian v1.4.0`;
+    
+    navigator.clipboard.writeText(text).then(() => {
+      alert('✓ Result copied to clipboard!');
+    }).catch(() => {
+      alert('Unable to copy. Please try again.');
+    });
+  }
+  
+  sanitizeUrlForDisplay(url) {
+    try {
+      const parsed = new URL(url);
+      return parsed.hostname + parsed.pathname.substring(0, 30) + (parsed.pathname.length > 30 ? '...' : '');
+    } catch {
+      return 'Unknown URL';
+    }
+  }
+  
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  
+  // Initialize live stats counters
+  initStats() {
+    // Simulate live stats (replace with real API calls when available)
+    this.updateStats();
+    setInterval(() => this.updateStats(), 10000); // Update every 10 seconds
+  }
+  
+  updateStats() {
+    // TODO: Replace with real API calls
+    const baseScans = 142847;
+    const baseThreats = 3291;
+    const baseUsers = 1204;
+    
+    const randomIncrement = () => Math.floor(Math.random() * 10);
+    
+    const statScans = document.getElementById('stat-scans');
+    const statThreats = document.getElementById('stat-threats');
+    const statUsers = document.getElementById('stat-users');
+    
+    if (statScans) {
+      const currentScans = parseInt(statScans.textContent) || baseScans;
+      this.animateCounter(statScans, currentScans, currentScans + randomIncrement());
+    }
+    
+    if (statThreats) {
+      const currentThreats = parseInt(statThreats.textContent) || baseThreats;
+      if (Math.random() > 0.7) { // 30% chance of threat increment
+        this.animateCounter(statThreats, currentThreats, currentThreats + 1);
+      }
+    }
+    
+    if (statUsers) {
+      const currentUsers = parseInt(statUsers.textContent) || baseUsers;
+      if (Math.random() > 0.9) { // 10% chance of user increment
+        this.animateCounter(statUsers, currentUsers, currentUsers + 1);
+      }
+    }
+  }
+  
+  animateCounter(element, start, end) {
+    const duration = 1000;
+    const range = end - start;
+    const increment = range / (duration / 50);
+    let current = start;
+    
+    const timer = setInterval(() => {
+      current += increment;
+      if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+        current = end;
+        clearInterval(timer);
+      }
+      element.textContent = Math.floor(current).toLocaleString();
+    }, 50);
+  }
+}
+
+// Initialize when DOM is ready
+let bradleyAnalyzer;
+document.addEventListener('DOMContentLoaded', () => {
+  bradleyAnalyzer = new BradleyAnalyzer();
+});
+
+FILE 4: app.py (Route Update)
+If your current Flask app doesn't have a proper route for the homepage, add this:
+pythonfrom flask import Flask, render_template, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    """Homepage - Extension install + URL analyzer"""
+    return render_template('index.html')
+
+@app.route('/beta')
+def beta():
+    """Beta signup page (create separately)"""
+    return render_template('beta.html')  # You'll need to create this
+
+@app.route('/privacy')
+def privacy():
+    """Privacy policy page"""
+    return render_template('privacy.html')  # You'll need to create this
+
+@app.route('/support')
+def support():
+    """Support/FAQ page"""
+    return render_template('support.html')  # You'll need to create this
+
+# Your existing /detect_video_deepfake endpoint should already exist
+# Make sure it accepts JSON with { "url_or_path": "..." }
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+
+TESTING CHECKLIST ✅
+After deploying to Replit:
+Test 1: Homepage Loads
+
+Visit https://bradleyai.replit.app/
+Verify Tron theme appears correctly
+Check all sections render (hero, analyzer, stats, etc.)
+
+Test 2: URL Input Validation
+
+Paste invalid URL → Analyze button stays disabled
+Paste valid URL → Analyze button enables
+Click analyze → Loading state appears
+
+Test 3: API Integration
+
+Submit valid video URL
+Check console for API call
+Verify result displays (green/red/yellow)
+Test "Analyze Another" button
+
+Test 4: Rate Limiting
+
+Analyze 3 videos within 1 hour
+4th analysis should show rate limit error
+Verify error message mentions extension install
+
+Test 5: Install Extension Buttons
+
+Click "Add to Chrome" buttons
+Verify redirect to /beta (before Chrome Web Store approval)
+After approval: Update chromeStoreUrl in analyzer.js
+
+Test 6: Responsive Design
+
+Test on mobile viewport
+Verify buttons stack correctly
+Check text readability
+
+Test 7: Stats Animation
+
+Verify numbers increment over time
+Check console for errors
+
+
+POST-DEPLOYMENT TASKS 📋
+1. Create Missing Pages:
+templates/beta.html - Beta signup page
+templates/privacy.html - Privacy policy (required for Chrome Web Store)
+templates/support.html - FAQ/support page
+I can provide these templates if needed.
+
+2. Update After Chrome Web Store Approval:
+In static/js/analyzer.js, line ~71:
+javascript// Replace this temporary URL:
+const chromeStoreUrl = 'https://chrome.google.com/webstore/detail/bradley-ai-guardian/YOUR_EXTENSION_ID';
+
+// With your actual Chrome Web Store URL after approval
+
+3. Backend Validation (Critical):
+Verify your /detect_video_deepfake endpoint accepts:
+jsonPOST /detect_video_deepfake
+Content-Type: application/json
+
+{
+  "url_or_path": "https://example.com/video.mp4"
+}
+And implements:
+
+URL validation (HTTPS only, no private IPs)
+File size limits (100MB max recommended)
+Timeout handling (30 seconds max)
+Rate limiting (IP-based)
+
+
+CONSERVATIVE BRAKE - CRITICAL REMINDERS 🔴
+1. Rate Limiting Implementation:
+The frontend enforces 3 analyses/hour for free users via localStorage. BUT:
+Problem: Users can clear localStorage and bypass
+Solution: Implement server-side rate limiting by IP:
+pythonfrom flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["100 per hour"]
+)
+
+@app.route('/detect_video_deepfake', methods=['POST'])
+@limiter.limit("10 per hour")  # Free tier: 10 analyses per hour
+def detect_video():
+    # Your existing detection logic
+    pass
+
+2. URL Security Validation:
+Backend MUST validate URLs to prevent SSRF attacks:
+pythonimport ipaddress
+from urllib.parse import urlparse
+
+BLOCKED_NETWORKS = [
+    ipaddress.ip_network('127.0.0.0/8'),    # Localhost
+    ipaddress.ip_network('10.0.0.0/8'),     # Private
+    ipaddress.ip_network('172.16.0.0/12'),  # Private
+    ipaddress.ip_network('192.168.0.0/16'), # Private
+]
+
+def is_safe_url(url_string):
+    try:
+        parsed = urlparse(url_string)
+        
+        # Must be HTTPS
+        if parsed.scheme != 'https':
+            return False
+        
+        # Resolve hostname to IP
+        ip = ipaddress.ip_address(socket.gethostbyname(parsed.hostname))
+        
+        # Check against blocked networks
+        for network in BLOCKED_NETWORKS:
+            if ip in network:
+                return False
+        
+        return True
+    except:
+        return False

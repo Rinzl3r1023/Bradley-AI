@@ -5,7 +5,7 @@ Bradley AI is a decentralized, open-source guardian that protects everyday peopl
 
 **Mission:** "Alan Bradley created Tron to protect the system from the MCP. We created Bradley to protect users from malicious AI."
 
-**Version:** v1.3.3 (CSP Compliant Extension)
+**Version:** v1.4.0 (Chrome Web Store Ready)
 
 ## Project Structure
 ```
@@ -24,12 +24,16 @@ Bradley-AI/
 ├── ui/
 │   ├── app.py             # Flask web application
 │   ├── templates/
-│   │   ├── index.html     # Main dashboard
-│   │   └── beta.html      # Closed beta signup
+│   │   ├── index.html     # Landing page with URL analyzer
+│   │   ├── beta.html      # Closed beta signup
+│   │   ├── privacy.html   # Privacy policy (Chrome Web Store)
+│   │   └── support.html   # FAQ/Support page
 │   └── static/
-│       ├── css/style.css  # Tron neon-grid styling
-│       └── js/main.js     # Frontend interaction
-├── Bradley-Extension/      # Chrome browser extension v1.1
+│       ├── css/style.css  # Tron neon-grid styling (old dashboard)
+│       ├── css/home.css   # New landing page styles
+│       ├── js/main.js     # Old dashboard scripts
+│       └── js/analyzer.js # URL analyzer logic
+├── Bradley-Extension/      # Chrome browser extension v1.4.0
 │   ├── manifest.json      # Extension manifest (MV3)
 │   ├── background.js      # Service worker
 │   ├── content.js         # Media scanner
@@ -53,8 +57,10 @@ Bradley-AI/
 6. **Tron UI** - Cyberpunk neon-grid interface
 
 ## API Endpoints
-- `GET /` - Main dashboard
+- `GET /` - Landing page with URL analyzer
 - `GET /beta` - Beta signup page
+- `GET /privacy` - Privacy policy page
+- `GET /support` - FAQ/Support page
 - `POST /api/scan` - Run demo threat scan
 - `POST /api/analyze/video` - Upload and analyze video
 - `POST /api/analyze/audio` - Upload and analyze audio
@@ -87,6 +93,9 @@ The Flask server runs on port 5000 via the "Bradley AI" workflow.
 - [ ] Chrome Web Store publication
 
 ## Recent Changes
+- **Dec 21, 2025:** New landing page with URL analyzer, hero section, badge states showcase, live stats
+- **Dec 21, 2025:** Extension v1.4.0 - Three-state badges (Human-Generated/AI-Generated/Unknown), 0.70 threshold, dismiss button
+- **Dec 21, 2025:** Added /privacy and /support pages for Chrome Web Store submission
 - **Dec 19, 2025:** Archived P2P node network to archive/node-network/ (restored Q3 2026+ after MVP validation)
 - **Dec 13, 2025:** Video detection v2.0: production-ready with rate limiting (10/min), metrics tracking, env config, A (96/100)
 - **Dec 13, 2025:** Security hardening A+ (98/100): rate limiting, admin auth, input validation, security headers
