@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Bradley AI Guardian</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .privacy-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .privacy-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .privacy-header h1 {
+            color: #00d4ff;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+        .privacy-header .subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+        .privacy-section {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .privacy-section h2 {
+            color: #00d4ff;
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+        }
+        .privacy-section p, .privacy-section li {
+            color: #ccc;
+            line-height: 1.8;
+            margin-bottom: 12px;
+        }
+        .privacy-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .privacy-section li::before {
+            content: "⟐ ";
+            color: #00d4ff;
+        }
+        .privacy-section.highlight-green li::before {
+            content: "✓ ";
+            color: #22c55e;
+        }
+        .privacy-section.highlight-red li::before {
+            content: "✗ ";
+            color: #ef4444;
+        }
+        .back-link {
+            display: inline-block;
+            color: #00d4ff;
+            text-decoration: none;
+            margin-bottom: 30px;
+            transition: color 0.3s;
+        }
+        .back-link:hover {
+            color: #fff;
+        }
+        .last-updated {
+            text-align: center;
+            color: #666;
+            margin-top: 40px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="privacy-container">
+        <a href="/" class="back-link">← Back to Dashboard</a>
+        
+        <div class="privacy-header">
+            <h1>⟐ BRADLEY AI GUARDIAN</h1>
+            <p class="subtitle">Privacy Policy</p>
+        </div>
+
+        <div class="privacy-section">
+            <h2>What We Collect</h2>
+            <ul>
+                <li>Public video URLs from websites you visit (for deepfake analysis only)</li>
+                <li>Detection results (stored locally in your browser)</li>
+                <li>Anonymous usage statistics (scan counts, threat counts)</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section highlight-red">
+            <h2>What We DON'T Collect</h2>
+            <ul>
+                <li>Browsing history</li>
+                <li>Personal information (name, email, etc.)</li>
+                <li>Passwords or sensitive data</li>
+                <li>Video content itself (only URLs are sent to API)</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2>How We Use Data</h2>
+            <ul>
+                <li>Video URLs are sent to our secure API for deepfake analysis</li>
+                <li>Results are stored locally in your browser (Chrome storage API)</li>
+                <li>Anonymous statistics help improve detection accuracy</li>
+                <li>No data is sold or shared with third parties</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section highlight-green">
+            <h2>Data Security</h2>
+            <ul>
+                <li>All API communication uses HTTPS encryption</li>
+                <li>No data stored on our servers (stateless API)</li>
+                <li>Local storage only (controlled by you)</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2>Your Rights</h2>
+            <ul>
+                <li>Disable extension at any time (stops all scanning)</li>
+                <li>Clear threat log anytime (delete local data)</li>
+                <li>Uninstall extension (removes all local data)</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2>Changes to Policy</h2>
+            <p>We may update this policy as Bradley evolves. Check this page for updates.</p>
+        </div>
+
+        <div class="privacy-section">
+            <h2>Contact</h2>
+            <p>Questions? Visit <a href="/" style="color: #00d4ff;">bradleyai.replit.app</a> or join our <a href="/beta" style="color: #00d4ff;">closed beta</a>.</p>
+        </div>
+
+        <p class="last-updated">Last Updated: December 21, 2025</p>
+    </div>
+</body>
+</html>

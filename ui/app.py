@@ -321,6 +321,11 @@ def beta_signup():
     return render_template('beta.html')
 
 
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+
 @app.route('/api/scan', methods=['POST'])
 def scan():
     try:
