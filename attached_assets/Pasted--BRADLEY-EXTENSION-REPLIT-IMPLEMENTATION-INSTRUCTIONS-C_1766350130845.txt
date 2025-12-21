@@ -1,0 +1,281 @@
+🔧 BRADLEY EXTENSION - REPLIT IMPLEMENTATION INSTRUCTIONS
+Copy-paste ready code changes for all files. 💪
+
+IMPLEMENTATION CHECKLIST ✅
+Files to modify:
+
+✅ content.js - Badge messaging + confidence threshold
+✅ content-styles.css - New state classes
+✅ manifest.json - Notifications permission
+
+Estimated time: 30-45 minutes
+
+FILE 1: content.js
+CHANGE #1: Update Confidence Threshold
+Location: Line 3
+Action: Change from 0.85 to 0.70
+FIND:
+javascriptconst CONFIG = {
+  API_BASE: 'https://bradleyai.replit.app',
+  SCAN_INTERVAL: 30000,
+  CONFIDENCE_THRESHOLD: 0.85,  // ← CHANGE THIS
+REPLACE WITH:
+javascriptconst CONFIG = {
+  API_BASE: 'https://bradleyai.replit.app',
+  SCAN_INTERVAL: 30000,
+  CONFIDENCE_THRESHOLD: 0.70,  // Industry standard for AI detection
+
+CHANGE #2: Update Badge Messaging Logic
+Location: Lines 169-174 (inside ScanIndicator class)
+Action: Replace entire showResult() method
+FIND:
+javascriptshowResult(r) {
+  if (r.is_deepfake && r.confidence > CONFIG.CONFIDENCE_THRESHOLD) {
+    this.render('bradley-threat', '⚠', `THREAT: ${Math.round(r.confidence*100)}%`);
+  } else {
+    this.render('bradley-safe', '✓', 'Verified');
+    setTimeout(() => this.remove(), 3000);
+  }
+}
+REPLACE WITH:
+javascriptshowResult(r) {
+  const confidencePercent = Math.round(r.confidence * 100);
+  
+  // High confidence detection (>= 70%)
+  if (r.confidence >= CONFIG.CONFIDENCE_THRESHOLD) {
+    if (r.is_deepfake) {
+      // AI-Generated - persist warning (don't auto-remove)
+      this.render('bradley-fake', '⚠', `AI-Generated (${confidencePercent}%)`);
+    } else {
+      // Human-Generated - fade after 3 seconds
+      this.render('bradley-real', '✓', `Human-Generated (${confidencePercent}%)`);
+      setTimeout(() => this.remove(), 3000);
+    }
+  } else {
+    // Low confidence - uncertain result
+    this.render('bradley-uncertain', '?', `Unknown (${confidencePercent}%)`);
+    setTimeout(() => this.remove(), 5000); // Longer display than success
+  }
+}
+
+FILE 2: content-styles.css
+CHANGE #3: Add New State Classes
+Location: After line 20 (after .bradley-error class)
+Action: Add three new CSS classes
+FIND:
+css.bradley-error {
+  background: rgba(245, 158, 11, 0.9);
+}
+ADD AFTER IT:
+css/* NEW: Human-Generated state (green) - clear positive result */
+.bradley-real {
+  background: rgba(34, 197, 94, 0.9);
+}
+
+/* NEW: AI-Generated state (red) - persistent warning */
+.bradley-fake {
+  background: rgba(239, 68, 68, 0.95);
+  pointer-events: auto; /* Allow user to click/dismiss */
+}
+
+/* NEW: Unknown/Uncertain state (yellow/amber) - inconclusive */
+.bradley-uncertain {
+  background: rgba(245, 158, 11, 0.9);
+}
+NOTE: These new classes replace the semantic meaning of bradley-safe and bradley-threat, but we keep those old classes for backwards compatibility if needed elsewhere.
+
+FILE 3: manifest.json
+CHANGE #4: Move Notifications to Required Permissions
+Location: Lines 6-11
+Action: Move "notifications" from optional to required
+FIND:
+json"permissions": [
+  "storage",
+  "activeTab"
+],
+"optional_permissions": [
+  "notifications"
+],
+REPLACE WITH:
+json"permissions": [
+  "storage",
+  "activeTab",
+  "notifications"
+],
+NOTE: Remove the entire "optional_permissions" block since it will be empty.
+
+TESTING INSTRUCTIONS 🧪
+After making changes, test these scenarios:
+TEST 1: Verify Changes Applied
+Action: Reload extension in browser
+
+Go to chrome://extensions/
+Click reload icon on Bradley extension
+Visit a test page with video
+
+Expected: Badge should now show "Human-Generated", "AI-Generated", or "Unknown" (NOT "Verified")
+
+TEST 2: Mock All Three States
+Since backend is in mock mode, you'll need to temporarily modify backend to return varied results.
+Option A: Update Backend Mock (Recommended)
+If you want to test all three states, update the backend mock:
+File: src/detection/video_detector.py
+Location: Line ~327 (the analyze_video function)
+REPLACE CURRENT MOCK:
+pythondef analyze_video(video_path: str, threshold: Optional[float] = None):
+    # MOCK MODE - Real model requires GPU
+    import random
+    logger.info(f"🔧 MOCK MODE: {video_path}")
+    
+    fake_confidence = random.uniform(0.05, 0.25)
+    return {
+        "is_deepfake": False,
+        "confidence": round(fake_confidence, 3),
+        "status": "success",
+        "label": "REAL"
+    }
+WITH THIS ENHANCED MOCK:
+pythondef analyze_video(video_path: str, threshold: Optional[float] = None):
+    """
+    MOCK MODE - Simulates all three detection states for testing UX
+    Real model requires GPU deployment (Q3 2026)
+    """
+    import random
+    logger.info(f"🔧 MOCK MODE: {video_path}")
+    
+    # Randomly select scenario to test all badge states
+    scenario = random.choice(['human_high', 'ai_high', 'uncertain'])
+    
+    if scenario == 'human_high':
+        # Human-Generated (high confidence) - GREEN badge
+        return {
+            "is_deepfake": False,
+            "confidence": round(random.uniform(0.75, 0.95), 3),
+            "status": "success",
+            "label": "HUMAN_GENERATED"
+        }
+    elif scenario == 'ai_high':
+        # AI-Generated (high confidence) - RED badge
+        return {
+            "is_deepfake": True,
+            "confidence": round(random.uniform(0.75, 0.95), 3),
+            "status": "success",
+            "label": "AI_GENERATED"
+        }
+    else:
+        # Uncertain (low confidence) - YELLOW badge
+        is_fake = random.choice([True, False])
+        return {
+            "is_deepfake": is_fake,
+            "confidence": round(random.uniform(0.30, 0.65), 3),
+            "status": "success",
+            "label": "UNCERTAIN"
+        }
+
+TEST 3: Expected Badge Behaviors
+After backend mock update, refresh test page multiple times. You should see:
+State 1: Human-Generated (Green)
+
+Icon: ✓
+Text: "Human-Generated (85%)" (percentage varies)
+Color: Green background
+Behavior: Fades after 3 seconds
+Frequency: ~33% of scans
+
+State 2: AI-Generated (Red)
+
+Icon: ⚠
+Text: "AI-Generated (82%)" (percentage varies)
+Color: Red background
+Behavior: PERSISTS (doesn't auto-fade) - important warning
+Frequency: ~33% of scans
+
+State 3: Unknown (Yellow)
+
+Icon: ?
+Text: "Unknown (45%)" (percentage varies 30-65%)
+Color: Yellow/amber background
+Behavior: Fades after 5 seconds (longer than success)
+Frequency: ~33% of scans
+
+
+VALIDATION CHECKLIST ✅
+Before submitting to Chrome Web Store, verify:
+
+ Badge shows "Human-Generated" (NOT "Verified") for safe content
+ Badge shows "AI-Generated" (NOT "THREAT: X%") for deepfakes
+ Badge shows "Unknown" for low-confidence results
+ Green badge fades after 3 seconds
+ Red badge persists (doesn't auto-fade)
+ Yellow badge fades after 5 seconds
+ Confidence percentage displays correctly
+ No console errors when scanning
+ Extension icon shows in browser toolbar
+ Popup shows stats correctly
+ Notifications permission granted automatically
+
+
+OPTIONAL: ADD DISMISS BUTTON TO AI-GENERATED BADGE
+Since AI-Generated badges persist (don't auto-fade), users might want to manually dismiss them.
+File: content.js
+Location: Inside render() method of ScanIndicator class (around line 202)
+ADD THIS ENHANCEMENT (Optional):
+FIND:
+javascriptrender(cls, icon, text) {
+  if (!this.overlay) this.createOverlay();
+  this.overlay.className = `bradley-indicator ${cls}`;
+  this.overlay.innerHTML = '';
+  const i = document.createElement('div'); i.className = 'bradley-icon'; i.textContent = icon;
+  const t = document.createElement('span'); t.textContent = text;
+  this.overlay.appendChild(i); this.overlay.appendChild(t);
+}
+REPLACE WITH:
+javascriptrender(cls, icon, text) {
+  if (!this.overlay) this.createOverlay();
+  this.overlay.className = `bradley-indicator ${cls}`;
+  this.overlay.innerHTML = '';
+  
+  const i = document.createElement('div'); 
+  i.className = 'bradley-icon'; 
+  i.textContent = icon;
+  
+  const t = document.createElement('span'); 
+  t.textContent = text;
+  
+  this.overlay.appendChild(i); 
+  this.overlay.appendChild(t);
+  
+  // Add dismiss button for persistent warnings (AI-Generated)
+  if (cls === 'bradley-fake') {
+    const dismissBtn = document.createElement('button');
+    dismissBtn.className = 'bradley-dismiss-btn';
+    dismissBtn.textContent = '×';
+    dismissBtn.title = 'Dismiss warning';
+    dismissBtn.onclick = (e) => {
+      e.stopPropagation();
+      this.remove();
+    };
+    this.overlay.appendChild(dismissBtn);
+  }
+}
+THEN ADD CSS (in content-styles.css):
+css/* Dismiss button for persistent AI-Generated warnings */
+.bradley-dismiss-btn {
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-left: 8px;
+  padding: 0;
+  line-height: 1;
+  transition: background 0.2s;
+}
+
+.bradley-dismiss-btn:hover {
+  background: rgba(0, 0, 0, 0.6);
+}

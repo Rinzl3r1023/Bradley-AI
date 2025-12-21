@@ -32,6 +32,43 @@
   background: rgba(245, 158, 11, 0.9);
 }
 
+/* NEW: Human-Generated state (green) - clear positive result */
+.bradley-real {
+  background: rgba(34, 197, 94, 0.9);
+}
+
+/* NEW: AI-Generated state (red) - persistent warning */
+.bradley-fake {
+  background: rgba(239, 68, 68, 0.95);
+  pointer-events: auto; /* Allow user to click/dismiss */
+}
+
+/* NEW: Unknown/Uncertain state (yellow/amber) - inconclusive */
+.bradley-uncertain {
+  background: rgba(245, 158, 11, 0.9);
+}
+
+/* Dismiss button for persistent AI-Generated warnings */
+.bradley-dismiss-btn {
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-left: 8px;
+  padding: 0;
+  line-height: 1;
+  transition: background 0.2s;
+}
+
+.bradley-dismiss-btn:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
 .bradley-icon {
   font-size: 14px;
 }

@@ -331,21 +331,62 @@ def get_video_detector():
 
 
 def analyze_video(video_path: str, threshold: Optional[float] = None) -> Dict[str, Any]:
+    """
+    MOCK MODE - Simulates all three detection states for testing UX
+    Real model requires GPU deployment (Q3 2026)
+    """
     import random
-    logger.info(f"MOCK MODE: Returning safe result for {video_path}")
-    fake_confidence = random.uniform(0.05, 0.25)
-    return {
-        "is_deepfake": False,
-        "confidence": round(fake_confidence, 3),
-        "threshold": threshold or config.deepfake_threshold,
-        "label": "REAL",
-        "details": [
-            {"label": "REAL", "score": round(1 - fake_confidence, 3)},
-            {"label": "FAKE", "score": round(fake_confidence, 3)}
-        ],
-        "status": "success",
-        "model": "mock-v1-gpu-unavailable"
-    }
+    logger.info(f"MOCK MODE: {video_path}")
+    
+    # Randomly select scenario to test all badge states
+    scenario = random.choice(['human_high', 'ai_high', 'uncertain'])
+    
+    if scenario == 'human_high':
+        # Human-Generated (high confidence) - GREEN badge
+        conf = round(random.uniform(0.75, 0.95), 3)
+        return {
+            "is_deepfake": False,
+            "confidence": conf,
+            "threshold": threshold or config.deepfake_threshold,
+            "label": "HUMAN_GENERATED",
+            "details": [
+                {"label": "REAL", "score": conf},
+                {"label": "FAKE", "score": round(1 - conf, 3)}
+            ],
+            "status": "success",
+            "model": "mock-v1-gpu-unavailable"
+        }
+    elif scenario == 'ai_high':
+        # AI-Generated (high confidence) - RED badge
+        conf = round(random.uniform(0.75, 0.95), 3)
+        return {
+            "is_deepfake": True,
+            "confidence": conf,
+            "threshold": threshold or config.deepfake_threshold,
+            "label": "AI_GENERATED",
+            "details": [
+                {"label": "REAL", "score": round(1 - conf, 3)},
+                {"label": "FAKE", "score": conf}
+            ],
+            "status": "success",
+            "model": "mock-v1-gpu-unavailable"
+        }
+    else:
+        # Uncertain (low confidence) - YELLOW badge
+        is_fake = random.choice([True, False])
+        conf = round(random.uniform(0.30, 0.65), 3)
+        return {
+            "is_deepfake": is_fake,
+            "confidence": conf,
+            "threshold": threshold or config.deepfake_threshold,
+            "label": "UNCERTAIN",
+            "details": [
+                {"label": "REAL", "score": round(1 - conf, 3) if is_fake else conf},
+                {"label": "FAKE", "score": conf if is_fake else round(1 - conf, 3)}
+            ],
+            "status": "success",
+            "model": "mock-v1-gpu-unavailable"
+        }
     # Original code below (won't execute - delete mock section when deploying to GPU)
     if threshold is None:
         threshold = config.deepfake_threshold

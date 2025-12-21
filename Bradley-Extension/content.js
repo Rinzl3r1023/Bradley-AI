@@ -1,7 +1,7 @@
 const CONFIG = {
   API_BASE: 'https://bradleyai.replit.app',
   SCAN_INTERVAL: 30000,
-  CONFIDENCE_THRESHOLD: 0.85,
+  CONFIDENCE_THRESHOLD: 0.70,  // Industry standard for AI detection
   MAX_RETRIES: 2,
   REQUEST_TIMEOUT: 15000,
   RATE_LIMIT_WINDOW: 60000,
@@ -188,11 +188,22 @@ class ScanIndicator {
   constructor(el) { this.el = el; this.overlay = null; }
   showScanning() { this.render('bradley-scanning', '⟐', 'Scanning...'); }
   showResult(r) {
-    if (r.is_deepfake && r.confidence > CONFIG.CONFIDENCE_THRESHOLD) {
-      this.render('bradley-threat', '⚠', `THREAT: ${Math.round(r.confidence*100)}%`);
+    const confidencePercent = Math.round(r.confidence * 100);
+    
+    // High confidence detection (>= 70%)
+    if (r.confidence >= CONFIG.CONFIDENCE_THRESHOLD) {
+      if (r.is_deepfake) {
+        // AI-Generated - persist warning (don't auto-remove)
+        this.render('bradley-fake', '⚠', `AI-Generated (${confidencePercent}%)`);
+      } else {
+        // Human-Generated - fade after 3 seconds
+        this.render('bradley-real', '✓', `Human-Generated (${confidencePercent}%)`);
+        setTimeout(() => this.remove(), 3000);
+      }
     } else {
-      this.render('bradley-safe', '✓', 'Verified');
-      setTimeout(() => this.remove(), 3000);
+      // Low confidence - uncertain result
+      this.render('bradley-uncertain', '?', `Unknown (${confidencePercent}%)`);
+      setTimeout(() => this.remove(), 5000); // Longer display than success
     }
   }
   showError(msg) { this.render('bradley-error', '⚠', msg); }
@@ -200,9 +211,29 @@ class ScanIndicator {
     if (!this.overlay) this.createOverlay();
     this.overlay.className = `bradley-indicator ${cls}`;
     this.overlay.innerHTML = '';
-    const i = document.createElement('div'); i.className = 'bradley-icon'; i.textContent = icon;
-    const t = document.createElement('span'); t.textContent = text;
-    this.overlay.appendChild(i); this.overlay.appendChild(t);
+    
+    const i = document.createElement('div'); 
+    i.className = 'bradley-icon'; 
+    i.textContent = icon;
+    
+    const t = document.createElement('span'); 
+    t.textContent = text;
+    
+    this.overlay.appendChild(i); 
+    this.overlay.appendChild(t);
+    
+    // Add dismiss button for persistent warnings (AI-Generated)
+    if (cls === 'bradley-fake') {
+      const dismissBtn = document.createElement('button');
+      dismissBtn.className = 'bradley-dismiss-btn';
+      dismissBtn.textContent = '×';
+      dismissBtn.title = 'Dismiss warning';
+      dismissBtn.onclick = (e) => {
+        e.stopPropagation();
+        this.remove();
+      };
+      this.overlay.appendChild(dismissBtn);
+    }
   }
   createOverlay() {
     console.log('[BRADLEY] Creating overlay for:', this.el.tagName, this.el.src?.substring(0, 50));
