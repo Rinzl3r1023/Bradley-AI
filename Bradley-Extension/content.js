@@ -307,7 +307,7 @@ class ThreatWarning {
    
     const title = document.createElement('h2');
     title.id = 'bradley-warning-title';
-    title.textContent = '⚠ DEEPFAKE DETECTED';
+    title.textContent = '⚠ AI CONTENT DETECTED';
    
     const confidence = document.createElement('p');
     confidence.className = 'bradley-confidence';
@@ -384,7 +384,7 @@ class ConsentDialog {
     title.textContent = 'Privacy & Consent';
    
     const intro = document.createElement('p');
-    intro.textContent = 'Bradley AI scans media on web pages to detect deepfakes and protect you from synthetic content.';
+    intro.textContent = 'Bradley AI scans media on web pages to detect AI-generated content and verify what you see.';
    
     const collectHeader = document.createElement('p');
     const collectStrong = document.createElement('strong');

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Bradley AI - Deepfake Guardian",
+  "name": "Bradley AI Guardian - AI Content Detector",
   "version": "1.4.0",
-  "description": "Real-time deepfake protection powered by AI. Detects synthetic media across the web.",
+  "description": "Instantly detect AI-generated videos across the web with real-time verification.",
   "minimum_chrome_version": "88",
 
   "permissions": [
@@ -40,7 +40,7 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "Bradley AI - Deepfake Guardian"
+    "default_title": "Bradley AI Guardian - AI Content Detector"
   },
 
   "icons": {

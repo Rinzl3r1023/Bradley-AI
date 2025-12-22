@@ -1,0 +1,165 @@
+✅ MESSAGING UPDATE CONFIRMED - EXCELLENT WORK
+Replit executed perfectly. Now let's finish the extension update. 🚀
+
+RESPONSE TO REPLIT 💬
+YES - Please update the browser extension files to match the new terminology.
+Here's exactly what needs updating:
+
+EXTENSION FILE UPDATES NEEDED 🔌
+FILE 1: manifest.json
+Update these fields:
+json{
+  "name": "Bradley AI Guardian - AI Content Detector",
+  "description": "Instantly detect AI-generated videos across the web with real-time verification",
+  "version": "1.4.0",
+  ...
+}
+```
+
+**Changes:**
+- `name`: Remove any "Deepfake" → Add "AI Content Detector"
+- `description`: "AI-generated videos" (not "deepfakes")
+
+---
+
+### **FILE 2: popup.html**
+
+**Update any user-facing text:**
+
+**Find & Replace:**
+```
+FIND: Deepfake
+REPLACE: AI Content
+
+FIND: deepfake
+REPLACE: AI-generated content
+Key areas:
+
+Page title
+Header text
+Button labels
+Status messages
+
+
+FILE 3: popup.js (or wherever badge labels are defined)
+Update badge text constants:
+javascript// OLD
+const BADGE_DEEPFAKE = "Deepfake Detected";
+const BADGE_AUTHENTIC = "Human Content";
+const BADGE_UNKNOWN = "Unknown";
+
+// NEW
+const BADGE_AI_GENERATED = "AI Content Detected";
+const BADGE_AUTHENTIC = "Human Created";
+const BADGE_UNKNOWN = "Unknown";
+Also update:
+
+Any console.log messages
+Error message strings
+Status text displayed to users
+
+
+FILE 4: content.js (badge display logic)
+Update badge text in HTML generation:
+javascript// OLD
+badge.textContent = "Deepfake Detected";
+
+// NEW
+badge.textContent = "AI Content Detected";
+```
+
+**Also check:**
+- Badge class names (if they reference "deepfake")
+- Tooltip text
+- Aria labels (accessibility)
+
+---
+
+### **FILE 5: background.js** (if it has user-facing strings)
+
+**Find & Replace:**
+```
+FIND: deepfake
+REPLACE: AI-generated content
+Only in:
+
+String literals
+Console messages
+User notifications
+
+Do NOT change:
+
+Function names (breaking change)
+Variable names (breaking change)
+API parameter names (breaking change)
+
+
+SPECIFIC INSTRUCTIONS FOR REPLIT 📋
+Safe Changes (Do These):
+javascript// ✅ SAFE - User-facing strings
+const message = "Analyzing video for AI-generated content...";
+console.log("AI content detection complete");
+badge.textContent = "AI Content Detected";
+
+// ✅ SAFE - Comments
+// Perform AI content detection on video element
+
+Risky Changes (Ask First):
+javascript// ⚠️ RISKY - Function names
+function detectDeepfake() { ... }  // Keep as-is for now (no breaking change)
+
+// ⚠️ RISKY - API parameters
+{ deepfake_detected: true }  // Keep as-is (backend expects this)
+
+// ⚠️ RISKY - Variable names
+let isDeepfake = false;  // Keep as-is (internal only)
+```
+
+---
+
+## **EXTENSION UPDATE PRIORITY** 🎯
+
+### **CRITICAL (Must Update Before Submission):**
+
+1. **manifest.json** - Name & description (Chrome Store shows this)
+2. **Badge text** - "AI Content Detected" visible to users
+3. **Popup UI** - Any displayed text
+
+### **IMPORTANT (Update if Present):**
+
+4. **Tooltip text** - Hover messages
+5. **Error messages** - User-facing alerts
+6. **Console logs** - Debugging (less critical but nice)
+
+### **OPTIONAL (Can Wait):**
+
+7. **Function names** - Internal code (not user-facing)
+8. **Variable names** - Internal logic (not visible)
+9. **API parameters** - Backend compatibility (change in Phase 2)
+
+---
+
+## **EXPECTED EXTENSION FILES** 📦
+
+**Based on typical Chrome extension structure:**
+```
+extension/
+├── manifest.json          ← UPDATE (name, description)
+├── popup.html            ← UPDATE (user-facing text)
+├── popup.js              ← UPDATE (badge labels, strings)
+├── content.js            ← UPDATE (badge display text)
+├── background.js         ← UPDATE (notification strings)
+├── styles.css            ← REVIEW (class names if needed)
+└── icons/                ← NO CHANGE (images fine)
+If your structure is different, just focus on files with user-facing text.
+
+VERIFICATION AFTER UPDATE ✅
+Ask Replit to Run:
+bash# Search extension folder for remaining "deepfake"
+grep -ri "deepfake" extension/ | grep -v "\.git"
+Expected results:
+
+⚠️ Some mentions in function/variable names (OK to keep)
+✅ Zero mentions in string literals (user-facing)
+✅ Zero mentions in manifest.json
+✅ Zero mentions in UI elements

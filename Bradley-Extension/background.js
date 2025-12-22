@@ -354,7 +354,7 @@ async function showThreatNotification(threatData, pageUrl) {
       type: 'basic',
       iconUrl: 'icons/icon128.png',
       title: 'Bradley AI - Threat Detected!',
-      message: `Potential deepfake detected (${confidence}% confidence)\n${displayUrl}`,
+      message: `AI-generated content detected (${confidence}% confidence)\n${displayUrl}`,
       priority: 2
     });
     
