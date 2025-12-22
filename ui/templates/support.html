@@ -3,143 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support - Bradley AI Guardian</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+    <title>Support — Bradley AI Guardian</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         .support-container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 60px 20px;
+            padding: 2rem;
         }
-        .support-header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-        .support-header h1 {
-            color: #00ffff;
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-        }
-        .support-header .subtitle {
-            color: #888;
-            font-size: 1rem;
-        }
+        
         .faq-section {
-            margin-bottom: 40px;
+            margin-top: 2rem;
         }
+        
         .faq-item {
-            background: rgba(26, 26, 46, 0.8);
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 16px;
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 4px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1rem;
             transition: all 0.3s ease;
         }
+        
         .faq-item:hover {
-            border-color: #00ffff;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
         }
+        
         .faq-question {
-            color: #00ffff;
-            font-size: 1.1rem;
-            margin-bottom: 12px;
-            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            letter-spacing: 0.05em;
+            color: var(--neon-cyan);
+            margin-bottom: 1rem;
         }
+        
         .faq-answer {
-            color: #ccc;
+            color: var(--text-secondary);
             line-height: 1.8;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
         }
+        
+        .faq-answer strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .faq-answer a {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .faq-answer a:hover {
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
+        .contact-section {
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 4px;
+            padding: 2.5rem;
+            margin-top: 3rem;
+            text-align: center;
+        }
+        
+        .contact-section h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 0.1em;
+            color: var(--neon-cyan);
+            margin-bottom: 1rem;
+        }
+        
+        .contact-section p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        
+        .contact-section a {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+        }
+        
+        .contact-section a:hover {
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
         .back-link {
             display: inline-block;
-            color: #00ffff;
+            margin-bottom: 2rem;
+            color: var(--neon-cyan);
             text-decoration: none;
-            margin-bottom: 30px;
-            transition: color 0.3s;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
         }
+        
         .back-link:hover {
-            color: #fff;
-        }
-        .contact-section {
-            background: rgba(0, 255, 255, 0.05);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 12px;
-            padding: 40px;
-            text-align: center;
-            margin-top: 40px;
-        }
-        .contact-section h2 {
-            color: #00ffff;
-            margin-bottom: 20px;
-        }
-        .contact-section p {
-            color: #aaa;
-            margin-bottom: 24px;
-        }
-        .contact-section a {
-            color: #00ffff;
+            text-shadow: 0 0 10px var(--neon-cyan);
         }
     </style>
 </head>
 <body>
+    <div class="grid-background"></div>
+    <div class="scanlines"></div>
+    
     <div class="support-container">
-        <a href="/" class="back-link">&larr; Back to Home</a>
+        <a href="/" class="back-link">← BACK TO SYSTEM</a>
         
-        <div class="support-header">
-            <h1>&#x27D0; SUPPORT</h1>
-            <p class="subtitle">Frequently Asked Questions</p>
-        </div>
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo-glow"></div>
+                <h1 class="logo">BRADLEY<span class="ai">AI</span></h1>
+            </div>
+            <p class="tagline">SUPPORT & FAQ</p>
+        </header>
 
         <div class="faq-section">
             <div class="faq-item">
-                <h3 class="faq-question">How does Bradley detect deepfakes?</h3>
+                <h3 class="faq-question">HOW DOES BRADLEY DETECT AI GENERATED CONTENT?</h3>
                 <p class="faq-answer">Bradley uses advanced AI models to analyze video content for signs of manipulation. We examine visual artifacts, temporal inconsistencies, and other markers that indicate AI-generated content. Our detection works in real-time as you browse.</p>
             </div>
 
             <div class="faq-item">
-                <h3 class="faq-question">What do the different badges mean?</h3>
+                <h3 class="faq-question">WHAT DO THE DIFFERENT BADGES MEAN?</h3>
                 <p class="faq-answer">
-                    <strong style="color: #22c55e;">Human-Generated (Green):</strong> 70%+ confidence that content is authentic.<br>
-                    <strong style="color: #ef4444;">AI-Generated (Red):</strong> 70%+ confidence that content contains AI manipulation.<br>
+                    <strong style="color: var(--neon-green);">Human-Generated (Green):</strong> 70%+ confidence that content is authentic.<br><br>
+                    <strong style="color: var(--neon-red);">AI-Generated (Red):</strong> 70%+ confidence that content contains AI manipulation.<br><br>
                     <strong style="color: #f59e0b;">Unknown (Yellow):</strong> Below 70% confidence - result is inconclusive.
                 </p>
             </div>
 
             <div class="faq-item">
-                <h3 class="faq-question">Why is my result "Unknown"?</h3>
+                <h3 class="faq-question">WHY IS MY RESULT "UNKNOWN"?</h3>
                 <p class="faq-answer">An "Unknown" result means our detection confidence is below 70%. This can happen with heavily compressed videos, unusual formats, very short clips, or subtle manipulation techniques. We believe in honest uncertainty - we won't claim high confidence when we don't have it.</p>
             </div>
 
             <div class="faq-item">
-                <h3 class="faq-question">Does Bradley store my videos?</h3>
-                <p class="faq-answer">No. Bradley only sends the video URL to our API for analysis. We do not download, store, or retain any video content. Detection results are stored locally in your browser only. See our <a href="/privacy" style="color: #00ffff;">Privacy Policy</a> for details.</p>
+                <h3 class="faq-question">DOES BRADLEY STORE MY VIDEOS?</h3>
+                <p class="faq-answer">No. Bradley only sends the video URL to our API for analysis. We do not download, store, or retain any video content. Detection results are stored locally in your browser only. See our <a href="/privacy">Privacy Policy</a> for details.</p>
             </div>
 
             <div class="faq-item">
-                <h3 class="faq-question">How many videos can I analyze?</h3>
+                <h3 class="faq-question">HOW MANY VIDEOS CAN I ANALYZE?</h3>
                 <p class="faq-answer">Free users on the website can analyze 3 videos per hour. Install our Chrome extension for unlimited automatic scanning of all videos you encounter while browsing.</p>
             </div>
 
             <div class="faq-item">
-                <h3 class="faq-question">Which platforms does Bradley work with?</h3>
+                <h3 class="faq-question">WHICH PLATFORMS DOES BRADLEY WORK WITH?</h3>
                 <p class="faq-answer">The Chrome extension works on virtually any website with video content, including YouTube, Twitter/X, Facebook, news sites, and more. The URL analyzer supports direct video links and embeds from most major platforms.</p>
             </div>
 
             <div class="faq-item">
-                <h3 class="faq-question">Is Bradley 100% accurate?</h3>
+                <h3 class="faq-question">IS BRADLEY 100% ACCURATE?</h3>
                 <p class="faq-answer">No AI system is perfect. Bradley uses state-of-the-art detection but may occasionally produce false positives or miss some deepfakes. That's why we show confidence scores and use "Unknown" when uncertain. Always use multiple sources when verifying important content.</p>
             </div>
 
             <div class="faq-item">
-                <h3 class="faq-question">How do I join the beta program?</h3>
-                <p class="faq-answer">Visit our <a href="/beta" style="color: #00ffff;">Beta Program</a> page to sign up with your wallet address. Beta members get early access to new features and can participate in our decentralized node network.</p>
+                <h3 class="faq-question">HOW DO I JOIN THE BETA PROGRAM?</h3>
+                <p class="faq-answer">Visit our <a href="/beta">Beta Program</a> page to sign up with your wallet address. Beta members get early access to new features and can participate in our decentralized node network.</p>
             </div>
         </div>
 
         <div class="contact-section">
-            <h2>Still Need Help?</h2>
+            <h2>STILL NEED HELP?</h2>
             <p>Join our community or reach out for support.</p>
-            <p><a href="/beta">Join the Beta Program</a> | <a href="/">Return to Home</a></p>
+            <p><a href="/beta">JOIN THE BETA PROGRAM</a> | <a href="/">RETURN TO HOME</a></p>
         </div>
     </div>
 </body>

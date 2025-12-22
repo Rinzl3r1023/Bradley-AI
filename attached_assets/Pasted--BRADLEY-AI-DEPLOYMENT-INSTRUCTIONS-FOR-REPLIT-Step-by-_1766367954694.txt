@@ -1,0 +1,532 @@
+📋 BRADLEY AI - DEPLOYMENT INSTRUCTIONS FOR REPLIT
+Step-by-step copy/paste guide to update your pages. 🚀
+
+STEP 1: BACKUP CURRENT FILES 💾
+In Replit Shell, run:
+bashcp templates/privacy.html templates/privacy_backup.html
+cp templates/support.html templates/support_backup.html
+Why: Safety first - you can always revert if needed.
+
+STEP 2: UPDATE PRIVACY.HTML 📄
+Instructions:
+
+In Replit, navigate to templates/privacy.html
+Select all (Ctrl+A / Cmd+A)
+Delete everything
+Copy the code below
+Paste into templates/privacy.html
+Save (Ctrl+S / Cmd+S)
+
+Code to Paste:
+html<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy — Bradley AI Guardian</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .privacy-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .privacy-section {
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 4px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .privacy-section h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 0.1em;
+            color: var(--neon-cyan);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+        }
+        
+        .privacy-section p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+        
+        .privacy-section ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 1rem;
+        }
+        
+        .privacy-section li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 0.75rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .privacy-section li::before {
+            content: "⟐";
+            color: var(--neon-cyan);
+            position: absolute;
+            left: 0;
+            font-size: 1.1rem;
+        }
+        
+        .privacy-section.highlight-green li::before {
+            content: "✓";
+            color: var(--neon-green);
+        }
+        
+        .privacy-section.highlight-red li::before {
+            content: "✗";
+            color: var(--neon-red);
+        }
+        
+        .privacy-section a {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .privacy-section a:hover {
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+        }
+        
+        .back-link:hover {
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
+        .last-updated {
+            text-align: center;
+            color: rgba(136, 204, 255, 0.5);
+            margin-top: 3rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-background"></div>
+    <div class="scanlines"></div>
+    
+    <div class="privacy-container">
+        <a href="/" class="back-link">← BACK TO SYSTEM</a>
+        
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo-glow"></div>
+                <h1 class="logo">BRADLEY<span class="ai">AI</span></h1>
+            </div>
+            <p class="tagline">PRIVACY POLICY</p>
+        </header>
+
+        <div class="privacy-section">
+            <h2>WHAT WE COLLECT</h2>
+            <ul>
+                <li>Public video URLs from websites you visit (for deepfake analysis only)</li>
+                <li>Detection results (stored locally in your browser)</li>
+                <li>Anonymous usage statistics (scan counts, threat counts)</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section highlight-red">
+            <h2>WHAT WE DON'T COLLECT</h2>
+            <ul>
+                <li>Browsing history</li>
+                <li>Personal information (name, email, etc.)</li>
+                <li>Passwords or sensitive data</li>
+                <li>Video content itself (only URLs are sent to API)</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2>HOW WE USE DATA</h2>
+            <ul>
+                <li>Video URLs are sent to our secure API for deepfake analysis</li>
+                <li>Results are stored locally in your browser (Chrome storage API)</li>
+                <li>Anonymous statistics help improve detection accuracy</li>
+                <li>No data is sold or shared with third parties</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section highlight-green">
+            <h2>DATA SECURITY</h2>
+            <ul>
+                <li>All API communication uses HTTPS encryption</li>
+                <li>No data stored on our servers (stateless API)</li>
+                <li>Local storage only (controlled by you)</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2>YOUR RIGHTS</h2>
+            <ul>
+                <li>Disable extension at any time (stops all scanning)</li>
+                <li>Clear threat log anytime (delete local data)</li>
+                <li>Uninstall extension (removes all local data)</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2>CHANGES TO POLICY</h2>
+            <p>We may update this policy as Bradley evolves. Check this page for updates.</p>
+        </div>
+
+        <div class="privacy-section">
+            <h2>CONTACT</h2>
+            <p>Questions? Visit <a href="/">bradleyai.replit.app</a> or join our <a href="/beta">closed beta</a>.</p>
+        </div>
+
+        <p class="last-updated">LAST UPDATED: DECEMBER 21, 2025</p>
+    </div>
+</body>
+</html>
+
+STEP 3: UPDATE SUPPORT.HTML 📄
+Instructions:
+
+In Replit, navigate to templates/support.html
+Select all (Ctrl+A / Cmd+A)
+Delete everything
+Copy the code below
+Paste into templates/support.html
+Save (Ctrl+S / Cmd+S)
+
+Code to Paste:
+html<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support — Bradley AI Guardian</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .support-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .faq-section {
+            margin-top: 2rem;
+        }
+        
+        .faq-item {
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 4px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .faq-item:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+        }
+        
+        .faq-question {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            letter-spacing: 0.05em;
+            color: var(--neon-cyan);
+            margin-bottom: 1rem;
+        }
+        
+        .faq-answer {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .faq-answer strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .faq-answer a {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .faq-answer a:hover {
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
+        .contact-section {
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 4px;
+            padding: 2.5rem;
+            margin-top: 3rem;
+            text-align: center;
+        }
+        
+        .contact-section h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 0.1em;
+            color: var(--neon-cyan);
+            margin-bottom: 1rem;
+        }
+        
+        .contact-section p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        
+        .contact-section a {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+        }
+        
+        .contact-section a:hover {
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+        }
+        
+        .back-link:hover {
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-background"></div>
+    <div class="scanlines"></div>
+    
+    <div class="support-container">
+        <a href="/" class="back-link">← BACK TO SYSTEM</a>
+        
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo-glow"></div>
+                <h1 class="logo">BRADLEY<span class="ai">AI</span></h1>
+            </div>
+            <p class="tagline">SUPPORT & FAQ</p>
+        </header>
+
+        <div class="faq-section">
+            <div class="faq-item">
+                <h3 class="faq-question">HOW DOES BRADLEY DETECT AI GENERATED CONTENT?</h3>
+                <p class="faq-answer">Bradley uses advanced AI models to analyze video content for signs of manipulation. We examine visual artifacts, temporal inconsistencies, and other markers that indicate AI-generated content. Our detection works in real-time as you browse.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">WHAT DO THE DIFFERENT BADGES MEAN?</h3>
+                <p class="faq-answer">
+                    <strong style="color: var(--neon-green);">Human-Generated (Green):</strong> 70%+ confidence that content is authentic.<br><br>
+                    <strong style="color: var(--neon-red);">AI-Generated (Red):</strong> 70%+ confidence that content contains AI manipulation.<br><br>
+                    <strong style="color: #f59e0b;">Unknown (Yellow):</strong> Below 70% confidence - result is inconclusive.
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">WHY IS MY RESULT "UNKNOWN"?</h3>
+                <p class="faq-answer">An "Unknown" result means our detection confidence is below 70%. This can happen with heavily compressed videos, unusual formats, very short clips, or subtle manipulation techniques. We believe in honest uncertainty - we won't claim high confidence when we don't have it.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">DOES BRADLEY STORE MY VIDEOS?</h3>
+                <p class="faq-answer">No. Bradley only sends the video URL to our API for analysis. We do not download, store, or retain any video content. Detection results are stored locally in your browser only. See our <a href="/privacy">Privacy Policy</a> for details.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">HOW MANY VIDEOS CAN I ANALYZE?</h3>
+                <p class="faq-answer">Free users on the website can analyze 3 videos per hour. Install our Chrome extension for unlimited automatic scanning of all videos you encounter while browsing.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">WHICH PLATFORMS DOES BRADLEY WORK WITH?</h3>
+                <p class="faq-answer">The Chrome extension works on virtually any website with video content, including YouTube, Twitter/X, Facebook, news sites, and more. The URL analyzer supports direct video links and embeds from most major platforms.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">IS BRADLEY 100% ACCURATE?</h3>
+                <p class="faq-answer">No AI system is perfect. Bradley uses state-of-the-art detection but may occasionally produce false positives or miss some deepfakes. That's why we show confidence scores and use "Unknown" when uncertain. Always use multiple sources when verifying important content.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">HOW DO I JOIN THE BETA PROGRAM?</h3>
+                <p class="faq-answer">Visit our <a href="/beta">Beta Program</a> page to sign up with your wallet address. Beta members get early access to new features and can participate in our decentralized node network.</p>
+            </div>
+        </div>
+
+        <div class="contact-section">
+            <h2>STILL NEED HELP?</h2>
+            <p>Join our community or reach out for support.</p>
+            <p><a href="/beta">JOIN THE BETA PROGRAM</a> | <a href="/">RETURN TO HOME</a></p>
+        </div>
+    </div>
+</body>
+</html>
+
+STEP 4: VERIFY DEPLOYMENT ✅
+In Replit:
+
+Run your app (click the big green "Run" button if not already running)
+Open the web preview
+Test each page:
+
+Visit /privacy - should show new Bradley-branded design
+Visit /support - should show new Bradley-branded design
+Visit /beta - should already look good (no changes)
+
+
+
+Visual Checklist:
+Look for these on EVERY page:
+
+✅ Grid background animation
+✅ Scanline overlay effect
+✅ Bradley logo with glow
+✅ Cyan color scheme
+✅ Orbitron font headers
+✅ Consistent panels with borders
+✅ "← BACK TO SYSTEM" link (top left)
+
+
+STEP 5: TEST FUNCTIONALITY 🧪
+Click Through Each Page:
+From homepage (/):
+
+Click "Privacy Policy" link → Should load new design
+Click "Support" link → Should load new design
+Click "Beta" link → Should load existing design
+
+From each page:
+
+Click "← BACK TO SYSTEM" → Should return to homepage
+Click any internal links (like /beta from support) → Should work
+
+All links should work, nothing broken ✅
+
+TROUBLESHOOTING 🔧
+Problem: Pages look plain/unstyled
+Cause: CSS variables not defined in style.css
+Fix: Add this to your static/css/style.css:
+css:root {
+    --neon-cyan: #00F0FF;
+    --neon-green: #22c55e;
+    --neon-red: #ef4444;
+    --neon-blue: #0066FF;
+    --panel-bg: rgba(0, 20, 40, 0.8);
+    --dark-bg: #001428;
+    --text-primary: #88CCFF;
+    --text-secondary: rgba(136, 204, 255, 0.8);
+}
+
+Problem: Grid background not showing
+Cause: Missing .grid-background or .scanlines CSS
+Check: Make sure style.css has these classes defined (should be there from homepage)
+If missing, add:
+css.grid-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    z-index: -1;
+    animation: gridMove 20s linear infinite;
+}
+
+.scanlines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.1),
+        rgba(0, 0, 0, 0.1) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    pointer-events: none;
+    z-index: 9999;
+}
+
+@keyframes gridMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 50px 50px; }
+}
+
+Problem: Logo not showing
+Cause: Missing logo CSS classes
+Check: Make sure style.css has .header, .logo, .logo-container, etc.
+If missing from style.css, they're defined inline in each page, so should still work
+
+ROLLBACK INSTRUCTIONS ⏪
+If You Need to Revert:
+In Replit Shell:
+bash# Restore privacy page
+cp templates/privacy_backup.html templates/privacy.html
+
+# Restore support page
+cp templates/support_backup.html templates/support.html
+Then refresh your browser - old versions restored ✅
+
+COMPLETION CHECKLIST ✅
+Before marking as done:
+
+ Backed up original files
+ Updated templates/privacy.html
+ Updated templates/support.html
+ Ran the app in Replit
+ Tested /privacy page (visual check)
+ Tested /support page (visual check)
+ Tested all navigation links
+ Verified grid background shows
+ Verified Bradley logo shows
+ Verified colors are consistent
+ Mobile tested (optional but recommended)
+
+
+OPTIONAL: MOBILE TEST 📱
+In Replit Preview:
+
+Right-click → "Inspect Element"
+Click device toolbar icon (phone/tablet icon)
+Select "iPhone 12" or similar
+Check all pages render properly
+
+Should work perfectly - all pages use responsive max-width containers ✅
