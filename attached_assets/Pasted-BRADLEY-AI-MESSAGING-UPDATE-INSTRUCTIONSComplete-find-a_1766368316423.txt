@@ -1,0 +1,273 @@
+BRADLEY AI - MESSAGING UPDATE INSTRUCTIONSComplete find-and-replace guide to shift from "Deepfake" to "AI Generated Content" 📋STEP 1: BACKUP CURRENT STATE 💾In Replit Shell, run:bash# Backup all templates
+cp -r templates templates_backup_deepfake
+
+# Backup static files (if any mention deepfake)
+cp -r static static_backup_deepfakeWhy: Safety net - can always revert if needed.STEP 2: UPDATE INDEX.HTML (Homepage) 🏠File Location: templates/index.htmlInstructions:
+Open templates/index.html
+Use Find & Replace (Ctrl+H / Cmd+H)
+Make these replacements:
+Find & Replace List:Replace 1:
+FIND: Deepfake Detection
+REPLACE: AI Content DetectionReplace 2:
+FIND: Detect Deepfakes
+REPLACE: Detect AI Generated ContentReplace 3:
+FIND: deepfake detection
+REPLACE: AI content detectionReplace 4:
+FIND: deepfake scanner
+REPLACE: AI content scannerReplace 5:
+FIND: deepfakes
+REPLACE: AI-generated contentReplace 6:
+FIND: Deepfake
+REPLACE: AI ContentReplace 7:
+FIND: deepfake
+REPLACE: AI-generated contentIMPORTANT: Do replacements in this EXACT order (most specific first)Manual Review Areas:Look for these sections and update manually if needed:Hero Section (Main headline):
+
+Should say something like: "Detect AI-Generated Content Everywhere"
+NOT: "Detect Deepfakes Everywhere"
+Tagline/Subtitle:
+
+Should say: "Real-time AI content verification"
+NOT: "Real-time deepfake detection"
+CTA Buttons:
+
+Can stay as: "Install Extension" or "Analyze Video" (no deepfake mention)
+Features List:
+
+Update any bullet points mentioning "deepfake" to "AI content"
+STEP 3: UPDATE BETA.HTML 📝File Location: templates/beta.htmlInstructions:
+Open templates/beta.html
+Use Find & Replace (Ctrl+H / Cmd+H)
+Find & Replace List:Replace 1:
+FIND: deepfake detection
+REPLACE: AI content detectionReplace 2:
+FIND: deepfakes
+REPLACE: AI-generated contentReplace 3:
+FIND: deepfake
+REPLACE: AI-generated contentManual Check:Page title (in <title> tag):
+
+Current: Might say "Bradley AI — Closed Beta Signup"
+This is fine (no deepfake mention)
+Beta info section:
+
+Should mention "decentralized guardian network" or similar
+Update if it says "protect against deepfakes" → "verify AI content"
+STEP 4: UPDATE PRIVACY.HTML 🔒File Location: templates/privacy.htmlInstructions:
+Open templates/privacy.html
+Use Find & Replace (Ctrl+H / Cmd+H)
+Find & Replace List:Replace 1:
+FIND: deepfake analysis
+REPLACE: AI content analysisReplace 2:
+FIND: deepfake detection
+REPLACE: AI content detectionReplace 3:
+FIND: deepfakes
+REPLACE: AI-generated contentKey Sections to Verify:"What We Collect" section:
+
+Should say: "Public video URLs from websites you visit (for AI content analysis only)"
+NOT: "...for deepfake analysis only"
+"How We Use Data" section:
+
+Should say: "Video URLs are sent to our secure API for AI content analysis"
+NOT: "...for deepfake analysis"
+STEP 5: UPDATE SUPPORT.HTML ❓File Location: templates/support.htmlInstructions:
+Open templates/support.html
+Use Find & Replace (Ctrl+H / Cmd+H)
+Find & Replace List:Replace 1:
+FIND: How does Bradley detect Ai Generated Content?
+REPLACE: HOW DOES BRADLEY DETECT AI GENERATED CONTENT?
+(Note: This might already say "AI Generated Content" - verify)Replace 2:
+FIND: deepfake detection
+REPLACE: AI content detectionReplace 3:
+FIND: deepfakes
+REPLACE: AI-generated contentReplace 4:
+FIND: deepfake
+REPLACE: AI-generated contentManual Verification for FAQ Questions:Question 1:
+
+Should be: "HOW DOES BRADLEY DETECT AI GENERATED CONTENT?"
+Answer should mention: "AI models to analyze video content for signs of manipulation"
+Question about accuracy:
+
+Should be: "IS BRADLEY 100% ACCURATE?"
+Answer should say: "No AI system is perfect" (this is fine, no deepfake mention needed)
+STEP 6: UPDATE APP.PY (Backend Routes) 🔧File Location: app.pyInstructions:
+Open app.py
+Look for route comments or print statements
+Find & Replace (if present):Replace 1:
+FIND: # Deepfake detection endpoint
+REPLACE: # AI content detection endpointReplace 2:
+FIND: "Deepfake detection"
+REPLACE: "AI content detection"Replace 3:
+FIND: deepfake_detected
+REPLACE: ai_generatedIMPORTANT: Only replace in COMMENTS and string literals
+
+Do NOT change function names (breaking change)
+Do NOT change variable names (breaking change)
+ONLY change user-facing strings and comments
+Example Safe Changes:python# OLD
+# Route for deepfake detection
+@app.route('/api/detect')
+def detect_deepfake():
+    # Perform deepfake analysis
+    return {"deepfake_detected": True}
+
+# NEW
+# Route for AI content detection
+@app.route('/api/detect')
+def detect_deepfake():  # Function name stays same (no breaking change)
+    # Perform AI content analysis
+    return {"deepfake_detected": True}  # API response stays same (backward compatible)If you want to change API responses (breaking change), do it in Phase 2STEP 7: CREATE MESSAGING REFERENCE DOC 📖Create New File: MESSAGING.md (optional but recommended)In Replit, create this file in root directory:markdown# Bradley AI Messaging Guide
+
+## Official Terminology
+
+### Primary Language (Consumer-Facing)
+- ✅ "AI-generated content" or "AI content"
+- ✅ "AI content detection"
+- ✅ "Video authenticity verification"
+- ✅ "Human-created" vs "AI-generated"
+- ❌ "Deepfake" (avoid in consumer-facing copy)
+- ❌ "Fake video" (imprecise)
+- ❌ "Synthetic media" (too technical)
+
+### Badge Labels
+- 🔴 Red Badge: "AI Generated" or "AI Content"
+- 🟢 Green Badge: "Human Created" or "Authentic"
+- 🟡 Yellow Badge: "Unknown" (honest uncertainty)
+
+### Technical/Internal Language (Docs, API, Code)
+- "Deepfake" acceptable in technical contexts
+- Function names can retain "deepfake" (avoid breaking changes)
+- API responses maintain compatibility
+
+## Brand Voice
+- Transparent, not alarmist
+- Helpful, not fear-based
+- Clear, not jargon-heavy
+- Universal, not niche
+
+## Updated: December 21, 2025Save this file - helps maintain consistency ✅STEP 8: VERIFICATION CHECKLIST ✅After Making All Changes:Run the app and check each page:
+Homepage (/):
+
+ No mention of "deepfake" in visible text
+ Says "AI content" or "AI-generated content"
+ Hero section updated
+ Features section updated
+
+
+
+Beta Page (/beta):
+
+ No "deepfake" in visible text
+ Updated to "AI content" language
+
+
+
+Privacy Page (/privacy):
+
+ "AI content analysis" (not deepfake analysis)
+ Consistent terminology throughout
+
+
+
+Support Page (/support):
+
+ FAQ questions updated
+ Answers use "AI content" language
+ No "deepfake" except possibly in technical explanations
+
+
+
+Search the Codebase:
+
+bash   # In Replit Shell, search for remaining "deepfake" mentions
+   grep -r "deepfake" templates/Review results - should only be:
+
+Internal variable names (OK to keep)
+API endpoints (OK to keep for now)
+No user-facing text
+STEP 9: BROWSER EXTENSION UPDATE (If Applicable) 🔌If You Have Extension Files in Replit:File Locations:
+
+extension/popup.html
+extension/popup.js
+extension/manifest.json
+extension/background.js
+Updates Needed:manifest.json:
+json{
+  "name": "Bradley AI Guardian - AI Content Detector",
+  "description": "Detects AI-generated content in videos across the web",
+  ...
+}popup.html / popup.js:
+
+Update badge text from "Deepfake Detected" → "AI Generated"
+Update UI labels from "deepfake" → "AI content"
+I can provide specific extension code updates if needed - let me know!STEP 10: FINAL QUALITY CHECK 🎯In Replit Shell, Run These Commands:bash# Search for any remaining "deepfake" in templates
+echo "=== Checking templates folder ==="
+grep -ri "deepfake" templates/ || echo "✅ No deepfake mentions in templates"
+
+# Search for user-facing strings in app.py
+echo "=== Checking app.py for user-facing strings ==="
+grep -i "deepfake" app.py | grep -E "(print|return.*[\'\"])" || echo "✅ No deepfake in user-facing strings"
+
+# Count total mentions (including code/comments)
+echo "=== Total deepfake mentions (including code) ==="
+grep -ri "deepfake" . --exclude-dir=templates_backup_deepfake --exclude-dir=static_backup_deepfake | wc -lExpected results:
+
+✅ Zero mentions in templates (user-facing)
+⚠️ Some mentions in code (function names, variables - OK to keep)
+✅ Backups excluded from search
+ROLLBACK INSTRUCTIONS ⏪If You Need to Revert:bash# Restore all templates
+rm -rf templates
+cp -r templates_backup_deepfake templates
+
+# Restore static files
+rm -rf static
+cp -r static_backup_deepfake static
+
+# Restart app
+# (Click "Run" button in Replit)Then refresh browser - old messaging restored ✅ESTIMATED TIME ⏱️Per File:
+
+Homepage: 5-10 minutes
+Beta page: 2-3 minutes
+Privacy page: 2-3 minutes
+Support page: 3-5 minutes
+App.py review: 3-5 minutes
+Verification: 5 minutes
+Total: ~25-35 minutes for complete update ✅QUICK REFERENCE: FIND & REPLACE PRIORITY 📝Do These In Order (Most Specific → Least Specific):
+"Deepfake Detection" → "AI Content Detection"
+"deepfake detection" → "AI content detection"
+"Detect Deepfakes" → "Detect AI Generated Content"
+"deepfake analysis" → "AI content analysis"
+"deepfake scanner" → "AI content scanner"
+"deepfakes" → "AI-generated content"
+"Deepfake" → "AI Content"
+"deepfake" → "AI-generated content"
+Why this order? Prevents partial replacements (e.g., replacing "deepfake" first would break "deepfake detection" into "AI-generated content detection")COMMONLY MISSED SPOTS 🔍Check These Manually:
+Page <title> tags:
+
+html   <title>Bradley AI Guardian - AI Content Detection</title>
+   <!-- NOT: Bradley AI Guardian - Deepfake Detection -->
+Meta descriptions:
+
+html   <meta name="description" content="Detect AI-generated content in videos...">
+   <!-- NOT: Detect deepfakes in videos... -->
+Alt text on images:
+
+html   <img alt="AI content detection badge">
+   <!-- NOT: Deepfake detection badge -->
+Button labels:
+
+html   <button>Scan for AI Content</button>
+   <!-- NOT: Scan for Deepfakes -->
+Error messages:
+
+javascript   "Failed to analyze AI content"
+   // NOT: "Failed to analyze deepfake"COMPLETION CHECKLIST ✅Before marking as done:
+ Backed up all files
+ Updated homepage (index.html)
+ Updated beta page
+ Updated privacy page
+ Updated support page
+ Reviewed app.py (comments/strings only)
+ Searched for remaining "deepfake" mentions
+ Tested all pages in browser
+ Verified messaging consistency
+ Created MESSAGING.md reference doc (optional)
+ Ready for Chrome Store submission with new messaging ✅
