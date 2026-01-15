@@ -1,3 +1,4 @@
+# Force rebuild v3
 """
 Bradley AI Guardian - Main Entry Point
 
