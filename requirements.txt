@@ -16,7 +16,6 @@ openai
 pytest
 urllib3
 ipfshttpclient
-resemblyzer
 soundfile
 torchaudio
 firebase-admin
