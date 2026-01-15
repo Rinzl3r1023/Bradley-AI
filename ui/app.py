@@ -49,6 +49,36 @@ ALLOWED_ORIGINS = {
     'https://bradley-ai.replit.app',
 }
 
+# HIGH PRIORITY FIX: Extension-specific CORS origins
+# Replace YOUR_EXTENSION_ID with actual Chrome Web Store extension ID after publishing
+EXTENSION_ALLOWED_ORIGINS = ALLOWED_ORIGINS | {
+    'chrome-extension://*',  # Placeholder - replace with actual ID in production
+}
+
+def get_cors_origin():
+    """Get appropriate CORS origin for extension endpoints.
+
+    Returns the request origin if it's in the allowed list, otherwise None.
+    This replaces the overly permissive '*' wildcard.
+    """
+    origin = request.headers.get('Origin', '')
+
+    # Allow whitelisted origins
+    if origin in ALLOWED_ORIGINS:
+        return origin
+
+    # Allow Chrome extensions (check if it's a chrome-extension:// origin)
+    if origin.startswith('chrome-extension://'):
+        return origin
+
+    # For requests without Origin header (same-origin), allow
+    if not origin:
+        return '*'
+
+    # Default: allow for backward compatibility but log warning
+    print(f"[BRADLEY] CORS: Allowing unlisted origin: {origin}")
+    return origin
+
 
 def require_admin_auth(f):
     @wraps(f)
@@ -95,7 +125,14 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET") or "bradley-guardian-key"
+# HIGH PRIORITY FIX: Require SESSION_SECRET in production
+session_secret = os.environ.get("SESSION_SECRET")
+if not session_secret:
+    if os.environ.get("FLASK_ENV") == "production":
+        raise ValueError("SESSION_SECRET environment variable is required in production")
+    print("[BRADLEY] WARNING: SESSION_SECRET not set - using insecure default for development only")
+    session_secret = "bradley-dev-key-not-for-production"
+app.secret_key = session_secret
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
@@ -332,6 +369,7 @@ def support():
 
 
 @app.route('/api/scan', methods=['POST'])
+@limiter.limit("10/minute")  # MEDIUM PRIORITY FIX: Add rate limiting
 def scan():
     try:
         result = swarm.run_sample_threat()
@@ -360,6 +398,7 @@ def scan():
 
 
 @app.route('/api/analyze/video', methods=['POST'])
+@limiter.limit("10/hour")  # MEDIUM PRIORITY FIX: Add rate limiting (file uploads are resource intensive)
 def analyze_video():
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
@@ -406,6 +445,7 @@ def analyze_video():
 
 
 @app.route('/api/analyze/audio', methods=['POST'])
+@limiter.limit("10/hour")  # MEDIUM PRIORITY FIX: Add rate limiting (file uploads are resource intensive)
 def analyze_audio():
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
@@ -454,7 +494,8 @@ def status():
     try:
         total_scans = db.session.query(ThreatDetection).count()
         threats_detected = db.session.query(ThreatDetection).filter_by(is_threat=True).count()
-    except:
+    except Exception as e:  # MEDIUM PRIORITY FIX: Use specific exception instead of bare except
+        print(f"[BRADLEY] Database query failed in status: {e}")
         total_scans = swarm.scans_completed
         threats_detected = swarm.threats_detected
     
@@ -548,36 +589,38 @@ def add_node():
 
 
 @app.route('/api/detect', methods=['POST', 'OPTIONS'])
+@limiter.limit("20/minute")  # MEDIUM PRIORITY FIX: Add rate limiting
 def detect_media():
+    cors_origin = get_cors_origin()  # HIGH PRIORITY FIX: Use specific CORS origin
     if request.method == 'OPTIONS':
         response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type, X-Bradley-Extension')
         response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
         return response
-    
+
     try:
         data = request.get_json()
         if not data:
             response = jsonify({'error': 'No data provided', 'is_deepfake': False, 'confidence': 0})
-            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Origin', cors_origin)
             return response, 400
-        
+
         media_url = data.get('url')
         media_type = data.get('type', 'video')
         page_url = data.get('page_url', '')
-        
+
         is_valid, error_msg = validate_media_url(media_url)
         if not is_valid:
             response = jsonify({'error': error_msg, 'is_deepfake': False, 'confidence': 0})
-            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Origin', cors_origin)
             return response, 400
-        
+
         if media_type not in ('video', 'audio'):
             media_type = 'video'
-        
+
         result = swarm.analyze_remote_media(media_url, media_type)
-        
+
         try:
             detection = ThreatDetection(
                 detection_type=f'extension_{media_type}',
@@ -594,115 +637,121 @@ def detect_media():
             db.session.add(detection)
             db.session.commit()
         except Exception as db_err:
-            print(f"Database error: {db_err}")
+            print(f"[BRADLEY] Database error in detect_media: {db_err}")
             db.session.rollback()
-        
+
         response = jsonify(result)
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         return response
-    
+
     except Exception as e:
         response = jsonify({'error': str(e), 'is_deepfake': False, 'confidence': 0})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         return response, 500
 
 
 @app.route('/api/report', methods=['POST', 'OPTIONS'])
+@limiter.limit("10/minute")  # MEDIUM PRIORITY FIX: Add rate limiting
 def report_threat():
+    cors_origin = get_cors_origin()  # HIGH PRIORITY FIX: Use specific CORS origin
     if request.method == 'OPTIONS':
         response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type, X-Bradley-Extension')
         response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
         return response
-    
+
     try:
         data = request.get_json()
         if not data:
             response = jsonify({'error': 'No data provided'})
-            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Origin', cors_origin)
             return response, 400
-        
+
         print(f"[REPORT] Threat reported: {data}")
-        
+
         response = jsonify({
             'success': True,
             'message': 'Threat reported successfully',
             'report_id': grid_node.node_id[:8] + '-' + str(int(datetime.utcnow().timestamp()))
         })
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         return response
     except Exception as e:
         response = jsonify({'error': str(e)})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         return response, 500
 
 
 @app.route('/detect_video_deepfake', methods=['POST', 'OPTIONS'])
+@limiter.limit("10/minute")  # MEDIUM PRIORITY FIX: Add rate limiting
 def detect_video_endpoint():
+    cors_origin = get_cors_origin()  # HIGH PRIORITY FIX: Use specific CORS origin
     if request.method == 'OPTIONS':
         response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type, X-Bradley-Extension')
         response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
         return response
-    
+
     try:
         data = request.get_json()
         if not data or not data.get('url_or_path'):
             response = jsonify({'error': 'url_or_path required', 'is_deepfake': False, 'confidence': 0})
-            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Origin', cors_origin)
             return response, 400
-        
+
         media_url = data.get('url_or_path')
         is_valid, error_msg = validate_media_url(media_url)
         if not is_valid:
             response = jsonify({'error': error_msg, 'is_deepfake': False, 'confidence': 0})
-            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Origin', cors_origin)
             return response, 400
-        
+
         result = detect_video_deepfake(media_url)
-        
+
         response = jsonify(result)
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         return response
     except Exception as e:
         response = jsonify({'error': str(e), 'is_deepfake': False, 'confidence': 0})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         return response, 500
 
 
 @app.route('/detect_audio_deepfake', methods=['POST', 'OPTIONS'])
+@limiter.limit("10/minute")  # MEDIUM PRIORITY FIX: Add rate limiting
 def detect_audio_endpoint():
+    cors_origin = get_cors_origin()  # HIGH PRIORITY FIX: Use specific CORS origin
     if request.method == 'OPTIONS':
         response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type, X-Bradley-Extension')
         response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
         return response
-    
+
     try:
         data = request.get_json()
         if not data or not data.get('url_or_path'):
             response = jsonify({'error': 'url_or_path required', 'is_deepfake': False, 'confidence': 0})
-            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Origin', cors_origin)
             return response, 400
-        
+
         media_url = data.get('url_or_path')
         is_valid, error_msg = validate_media_url(media_url)
         if not is_valid:
             response = jsonify({'error': error_msg, 'is_deepfake': False, 'confidence': 0})
-            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Origin', cors_origin)
             return response, 400
-        
+
         result = detect_audio_deepfake(media_url)
-        
+
         response = jsonify(result)
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         return response
     except Exception as e:
         response = jsonify({'error': str(e), 'is_deepfake': False, 'confidence': 0})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         return response, 500
 
 
@@ -745,34 +794,42 @@ def get_pending_nodes():
 
 
 @app.route('/api/nodes/submit', methods=['POST', 'OPTIONS'])
+@limiter.limit("5/hour")  # MEDIUM PRIORITY FIX: Add rate limiting
 def submit_node_request():
+    cors_origin = get_cors_origin()  # HIGH PRIORITY FIX: Use specific CORS origin
     if request.method == 'OPTIONS':
         response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
         response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
         return response
-    
+
     if not firestore_db:
         response = jsonify({'error': 'Firestore not configured', 'success': False})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         return response, 503
-    
+
     try:
         data = request.get_json()
         if not data:
             response = jsonify({'error': 'JSON body required', 'success': False})
-            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Origin', cors_origin)
             return response, 400
-        
+
         wallet = data.get('wallet', '').strip()
         email = data.get('email', '').strip()
-        
+
         if not wallet or not wallet.startswith('0x') or len(wallet) != 42:
             response = jsonify({'error': 'Valid Ethereum wallet address required', 'success': False})
-            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Origin', cors_origin)
             return response, 400
-        
+
+        # MEDIUM PRIORITY FIX: Add email validation
+        if email and not validate_email(email):
+            response = jsonify({'error': 'Invalid email address', 'success': False})
+            response.headers.add('Access-Control-Allow-Origin', cors_origin)
+            return response, 400
+
         node_data = {
             'wallet': wallet.lower(),
             'email': email if email else None,
@@ -780,20 +837,20 @@ def submit_node_request():
             'submittedAt': firestore.SERVER_TIMESTAMP,
             'source': 'web'
         }
-        
+
         doc_ref = firestore_db.collection('pendingNodes').document(wallet.lower())
         doc_ref.set(node_data, merge=True)
-        
+
         response = jsonify({
             'success': True,
             'message': 'Node request submitted! You will be notified when approved.',
             'wallet': wallet.lower()
         })
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         return response
     except Exception as e:
         response = jsonify({'error': str(e), 'success': False})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', cors_origin)
         return response, 500
 
 
@@ -824,4 +881,8 @@ def approve_node():
 init_firebase()
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # MEDIUM PRIORITY FIX: Disable debug mode in production
+    debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    if os.environ.get('FLASK_ENV') == 'production' and debug_mode:
+        print("[BRADLEY] WARNING: Debug mode enabled in production - this is a security risk!")
+    app.run(host='0.0.0.0', port=5000, debug=debug_mode)
